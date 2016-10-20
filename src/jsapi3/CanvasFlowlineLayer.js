@@ -9,11 +9,12 @@ define([
   'esri/Color',
   'esri/layers/GraphicsLayer',
   'esri/graphic',
+  'esri/SpatialReference',
   'esri/symbols/SimpleMarkerSymbol',
   'esri/geometry/Point'
 ], function(
   lang, declare, dom, domConstruct, Evented, on,
-  Color, GraphicsLayer, Graphic, SimpleMarkerSymbol, Point
+  Color, GraphicsLayer, Graphic, SpatialReference, SimpleMarkerSymbol, Point
 ) {
   return declare([Evented], {
     constructor: function(options) {
@@ -110,7 +111,7 @@ define([
           width: this.map.width + 'px',
           height: this.map.height + 'px',
           style: 'position: absolute; left: 0px; top: 0px;'
-        }, 'map_layer1', 'after'); // TODO: find a more flexible way to add this to the right DOM position
+        }, 'map_layer0', 'after'); // TODO: find a more flexible way to add this to the right DOM position
       }
 
       return canvasElement;
@@ -214,6 +215,7 @@ define([
       var clonedGraphicJson = lang.clone(inputGraphicJson);
       clonedGraphicJson.geometry.x = clonedGraphicJson.attributes[configGeometryObject.x];
       clonedGraphicJson.geometry.y = clonedGraphicJson.attributes[configGeometryObject.y];
+      clonedGraphicJson.geometry.spatialReference = new SpatialReference(configGeometryObject.spatialReference.wkid);
 
       var graphic = new Graphic(clonedGraphicJson);
       graphic.setAttributes(lang.mixin(graphic.attributes, {
