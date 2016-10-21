@@ -12,7 +12,7 @@ define([], function() {
           }
         },
         // use this destination attribute to refrain from re-drawing identical destination graphics
-        // i.e. only show 1 distribution center per each unique entry in the csv in the canvas
+        // i.e. only show 1 destination per each unique entry in the csv in the canvas
         destinationUniqueIdField: 'e_city_id',
         destinationGeometry: {
           x: 'e_lon',
@@ -29,7 +29,7 @@ define([], function() {
         type: 'simple',
         symbol: {
           globalCompositeOperation: 'destination-over',
-          radius: 4,
+          radius: 5,
           fillStyle: 'rgba(250, 140, 44, 0.47)',
           lineWidth: 1,
           strokeStyle: 'rgba(255, 137, 0, 0.6)',
@@ -41,7 +41,7 @@ define([], function() {
         type: 'simple',
         symbol: {
           globalCompositeOperation: 'destination-over',
-          radius: 4.5,
+          radius: 5.5,
           fillStyle: 'rgba(250, 140, 44, 0.47)',
           lineWidth: 4,
           strokeStyle: 'rgb(255, 0, 51)',
@@ -53,8 +53,8 @@ define([], function() {
         type: 'simple',
         symbol: {
           globalCompositeOperation: 'destination-over',
-          radius: 10,
-          fillStyle: 'rgba(87, 216, 255, 0.65)',
+          radius: 8,
+          fillStyle: 'rgba(87, 216, 255, 0.5)',
           lineWidth: 0.5,
           strokeStyle: 'rgb(61, 225, 255)',
           shadowBlur: 0
@@ -65,8 +65,8 @@ define([], function() {
         type: 'simple',
         symbol: {
           globalCompositeOperation: 'destination-over',
-          radius: 10,
-          fillStyle: 'rgba(87, 216, 255, 0.65)',
+          radius: 8,
+          fillStyle: 'rgba(87, 216, 255, 0.5)',
           lineWidth: 6,
           strokeStyle: 'rgb(255, 0, 51)',
           shadowBlur: 0
@@ -97,7 +97,7 @@ define([], function() {
         type: 'Number'
       }, {
         name: 'e_city_id',
-        type: 'String'
+        type: 'Number'
       }, {
         name: 'e_City',
         type: 'String'

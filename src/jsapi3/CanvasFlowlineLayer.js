@@ -16,83 +16,120 @@ define([
   lang, declare, dom, domConstruct, Evented, on,
   Color, GraphicsLayer, Graphic, SpatialReference, SimpleMarkerSymbol, Point
 ) {
-  return declare([Evented], {
+  return declare([GraphicsLayer], {
     constructor: function(options) {
-      this.inherited(arguments);
+      // public options/properties
+      this.originAndDestinationFieldIds = options.originAndDestinationFieldIds || null;
+      this.originCircleProperties = options.originCircleProperties || null;
+      this.originHighlightCircleProperties = options.originHighlightCircleProperties || null;
+      this.destinationCircleProperties = options.destinationCircleProperties || null;
+      this.destinationHighlightCircleProperties = options.destinationHighlightCircleProperties || null;
+      this.pathProperties = options.pathProperties || null;
+      this.pathDisplayMode = options.pathDisplayMode || 'all'; // 'selection' or 'all'
 
-      this.id = null;
-      this.map = null;
-      this.originAndDestinationFieldIds = null;
-      this.originCircleProperties = null;
-      this.originHighlightCircleProperties = null;
-      this.destinationCircleProperties = null;
-      this.destinationHighlightCircleProperties = null;
-      this.pathProperties = null;
-      this.graphics = [];
-      this.visible = false;
-
-      lang.mixin(this, options);
-
-      this._initGhostGraphicsLayer();
-      this._initListeners();
+      // private properties
+      this._previousPanDelta = {
+        x: 0,
+        y: 0
+      };
+      this._listeners = [];
     },
+
+    /*
+    EXTENDED JSAPI GRAPHICSLAYER METHODS
+    */
+
+    // TODO: test out and finalize which GraphicsLayer methods need to be overridden
+
+    _setMap: function() {
+      var div = this.inherited(arguments);
+      if (this._listeners.length) {
+        this._toggleListeners();
+        if (this.visible) {
+          this._redrawCanvas();
+        }
+      } else {
+        this._initListeners();
+      }
+      return div;
+    },
+
+    _unsetMap: function() {
+      this.inherited(arguments);
+      var forceOff = true;
+      this._toggleListeners(forceOff);
+      this._clearCanvas();
+    },
+
+    // add: function(graphic) {
+    //   this.inherited(arguments);
+    // },
+
+    // clear: function() {
+    //   this.inherited(arguments);
+    //   this._clearCanvas();
+    // },
 
     /*
     PRIVATE METHODS
     */
 
-    _initGhostGraphicsLayer: function() {
-      this._ghostGraphicsLayer = new GraphicsLayer({
-        id: this.id + '_canvasGhostGraphics',
-        visible: this.visible
-      });
-      this.map.addLayer(this._ghostGraphicsLayer);
-    },
-
     _initListeners: function() {
-      this._listeners = [];
+      // custom handling of when setVisibility(), show(), or hide() are called on the layer
+      this.on('visibility-change', lang.hitch(this, function(evt) {
+        this._toggleListeners();
+        if (evt.visible) {
+          this._redrawCanvas();
+        } else {
+          this._clearCanvas();
+        }
+      }));
 
       // user finishes zooming or panning the map
-      this._listeners.push(on.pausable(this.map, 'extent-change', lang.hitch(this, '_redrawCanvas')));
+      this._listeners.push(on.pausable(this._map, 'extent-change', lang.hitch(this, '_redrawCanvas')));
 
       // user begins zooming the map
-      this._listeners.push(on.pausable(this.map, 'zoom-start', lang.hitch(this, '_clearCanvas')));
+      this._listeners.push(on.pausable(this._map, 'zoom-start', lang.hitch(this, '_clearCanvas')));
 
       // user is currently panning the map
-      this._listeners.push(on.pausable(this.map, 'pan', lang.hitch(this, '_panCanvas')));
+      this._listeners.push(on.pausable(this._map, 'pan', lang.hitch(this, '_panCanvas')));
 
       // map was resized in the browser
-      this._listeners.push(on.pausable(this.map, 'resize', lang.hitch(this, '_resizeCanvas')));
+      this._listeners.push(on.pausable(this._map, 'resize', lang.hitch(this, '_resizeCanvas')));
 
-      // user clicks on a ghost graphic
-      this._listeners.push(on.pausable(this._ghostGraphicsLayer, 'click', lang.hitch(this, function(evt) {
-        var sharedOriginOrDestinationGraphics;
-        var isClickedOrigin = evt.graphic.attributes._isOrigin;
-        // for a clicked origin point,
-        // make an array of all other graphics with the same unique value from a configured attribute field
-        if (isClickedOrigin) {
-          sharedOriginOrDestinationGraphics = this._ghostGraphicsLayer.graphics.filter(lang.hitch(this, function(graphic) {
-            return (graphic.attributes[this.originAndDestinationFieldIds.originUniqueIdField] === evt.graphic.attributes[this.originAndDestinationFieldIds.originUniqueIdField]) && graphic.attributes._isOrigin;
-          }));
+      // user interacts with a graphic by click on or mouse-over
+      this._listeners.push(on.pausable(this, 'click,mouse-over', lang.hitch(this, function(evt) {
+        var isOriginGraphic = evt.isOriginGraphic = evt.graphic.attributes._isOrigin;
+        evt.sharedOriginGraphics = [];
+        evt.sharedDestinationGraphics = [];
+
+        if (isOriginGraphic) {
+          // for an ORIGIN point that was interacted with,
+          // make an array of all other ORIGIN graphics with the same ORIGIN ID field
+          var originUniqueIdField = this.originAndDestinationFieldIds.originUniqueIdField;
+          var evtGraphicOriginId = evt.graphic.attributes[originUniqueIdField];
+          evt.sharedOriginGraphics = this.graphics.filter(function(graphic) {
+            return graphic.attributes._isOrigin &&
+              graphic.attributes[originUniqueIdField] === evtGraphicOriginId;
+          }, this);
         } else {
-          // for a clicked destination point,
-          // make an array of all other graphics with the same unique value from a configured attribute field
-          sharedOriginOrDestinationGraphics = this._ghostGraphicsLayer.graphics.filter(lang.hitch(this, function(graphic) {
-            return (graphic.attributes[this.originAndDestinationFieldIds.destinationUniqueIdField] === evt.graphic.attributes[this.originAndDestinationFieldIds.destinationUniqueIdField]) && !graphic.attributes._isOrigin;
-          }));
+          // for a DESTINATION point that was interacted with,
+          // make an array of all other ORIGIN graphics with the same DESTINATION ID field
+          var destinationUniqueIdField = this.originAndDestinationFieldIds.destinationUniqueIdField;
+          var evtGraphicDestinationId = evt.graphic.attributes[destinationUniqueIdField];
+          evt.sharedDestinationGraphics = this.graphics.filter(function(graphic) {
+            return graphic.attributes._isOrigin &&
+              graphic.attributes[destinationUniqueIdField] === evtGraphicDestinationId;
+          }, this);
         }
-        // now we have an array of all graphics with the same origin OR destination unique value as what was clicked on
-        evt.sharedOriginOrDestinationGraphics = sharedOriginOrDestinationGraphics;
-        evt.isClickedOrigin = isClickedOrigin;
-        this.emit('click', evt);
       })));
-
-      // pause or resume the listeners depending on visibility
+      // pause or resume the listeners depending on initial visibility
       this._toggleListeners();
     },
 
-    _toggleListeners: function() {
-      var pausableMethodName = this.visible ? 'resume' : 'pause';
+    _toggleListeners: function(forceOff) {
+      forceOff = forceOff || !this.visible;
+      var pausableMethodName = forceOff ? 'pause' : 'resume';
       this._listeners.forEach(function(listener) {
         listener[pausableMethodName]();
       });
@@ -108,8 +145,8 @@ define([
       if (!canvasElement) {
         canvasElement = domConstruct.create('canvas', {
           id: canvasElementId,
-          width: this.map.width + 'px',
-          height: this.map.height + 'px',
+          width: this._map.width + 'px',
+          height: this._map.height + 'px',
           style: 'position: absolute; left: 0px; top: 0px;'
         }, 'map_layer0', 'after'); // TODO: find a more flexible way to add this to the right DOM position
       }
@@ -164,8 +201,8 @@ define([
     _resizeCanvas: function() {
       // resize the canvas if the map was resized
       var canvasElement = this._getCustomCanvasElement();
-      canvasElement.width = this.map.width;
-      canvasElement.height = this.map.height;
+      canvasElement.width = this._map.width;
+      canvasElement.height = this._map.height;
     },
 
     _applyGraphicsSelection: function(selectionGraphics, selectionMode, selectionAttributeName) {
@@ -174,7 +211,7 @@ define([
       });
 
       if (selectionMode === 'SELECTION_NEW') {
-        this._ghostGraphicsLayer.graphics.forEach(function(graphic) {
+        this.graphics.forEach(function(graphic) {
           if (selectionIds.indexOf(graphic.attributes._uniqueId) > -1) {
             graphic.attributes[selectionAttributeName] = true;
           } else {
@@ -182,13 +219,13 @@ define([
           }
         });
       } else if (selectionMode === 'SELECTION_ADD') {
-        this._ghostGraphicsLayer.graphics.forEach(function(graphic) {
+        this.graphics.forEach(function(graphic) {
           if (selectionIds.indexOf(graphic.attributes._uniqueId) > -1) {
             graphic.attributes[selectionAttributeName] = true;
           }
         });
       } else if (selectionMode === 'SELECTION_SUBTRACT') {
-        this._ghostGraphicsLayer.graphics.forEach(function(graphic) {
+        this.graphics.forEach(function(graphic) {
           if (selectionIds.indexOf(graphic.attributes._uniqueId) > -1) {
             graphic.attributes[selectionAttributeName] = false;
           }
@@ -220,7 +257,7 @@ define([
       var graphic = new Graphic(clonedGraphicJson);
       graphic.setAttributes(lang.mixin(graphic.attributes, {
         _isOrigin: isOrigin,
-        _isSelectedForPathDisplay: false,
+        _isSelectedForPathDisplay: this.pathDisplayMode === 'all' && isOrigin ? true : false,
         _isSelectedForHighlight: false,
         _uniqueId: uniqueId
       }));
@@ -254,7 +291,7 @@ define([
       var destinationUniqueIdValues = [];
 
       // loop over all graphic objects in the csvGraphicsLayer
-      this._ghostGraphicsLayer.graphics.forEach(lang.hitch(this, function(graphic) {
+      this.graphics.forEach(lang.hitch(this, function(graphic) {
         if (graphic.attributes._isOrigin) {
           // re-draw all the origin points using the canvas
           if (graphic.attributes._isSelectedForHighlight) {
@@ -279,7 +316,7 @@ define([
 
     _drawNewCanvasPoint: function(graphic, canvasElement, circleProperties) {
       // convert to screen coordinates for canvas drawing
-      var screenPoint = this.map.toScreen(graphic.geometry);
+      var screenPoint = this._map.toScreen(graphic.geometry);
 
       // draw a circle point on the canvas
       if (circleProperties.type === 'simple') {
@@ -309,7 +346,7 @@ define([
     _drawSelectedCanvasPaths: function() {
       var canvasElement = this._getCustomCanvasElement();
 
-      this._ghostGraphicsLayer.graphics.forEach(lang.hitch(this, function(graphic) {
+      this.graphics.forEach(lang.hitch(this, function(graphic) {
         if (graphic.attributes._isSelectedForPathDisplay) {
           var originLon = graphic.attributes[this.originAndDestinationFieldIds.originGeometry.x];
           var originLat = graphic.attributes[this.originAndDestinationFieldIds.originGeometry.y];
@@ -327,13 +364,13 @@ define([
       var originPoint = new Point(originXCoordinate, originYCoordinate, spatialReference);
 
       // convert to screen coordinates for canvas drawing
-      var screenOriginPoint = this.map.toScreen(originPoint);
+      var screenOriginPoint = this._map.toScreen(originPoint);
 
       // destination point for drawing curved lines
       var destinationPoint = new Point(destinationXCoordinate, destinationYCoordinate, spatialReference);
 
       // convert to screen coordinates for canvas drawing
-      var screenDestinationPoint = this.map.toScreen(destinationPoint);
+      var screenDestinationPoint = this._map.toScreen(destinationPoint);
 
       // draw a curved canvas line
       if (pathProperties.type === 'simple') {
@@ -363,29 +400,15 @@ define([
     PUBLIC METHODS
     */
 
-    show: function() {
-      this.visible = true;
-      this._toggleListeners();
-      this._ghostGraphicsLayer.show();
-      this._redrawCanvas();
-    },
-
-    hide: function() {
-      this.visible = false;
-      this._toggleListeners();
-      this._ghostGraphicsLayer.hide();
-      this._clearCanvas();
-    },
-
     clearAllPathSelections: function() {
-      this._ghostGraphicsLayer.graphics.forEach(function(graphic) {
+      this.graphics.forEach(function(graphic) {
         graphic.attributes._isSelectedForPathDisplay = false;
       });
       this._redrawCanvas();
     },
 
     clearAllHighlightSelections: function() {
-      this._ghostGraphicsLayer.graphics.forEach(function(graphic) {
+      this.graphics.forEach(function(graphic) {
         graphic.attributes._isSelectedForHighlight = false;
       });
       this._redrawCanvas();
@@ -405,16 +428,16 @@ define([
 
         // origin point
         var originGhostGraphic = this._constructGhostGraphic(inputGraphicJson, true, index + '_o');
-        this._ghostGraphicsLayer.add(originGhostGraphic);
+        // this._ghostGraphicsLayer.add(originGhostGraphic);
+        this.add(originGhostGraphic);
 
         // destination point
         var destinationGhostGraphic = this._constructGhostGraphic(inputGraphicJson, false, index + '_d');
-        this._ghostGraphicsLayer.add(destinationGhostGraphic);
+        // this._ghostGraphicsLayer.add(destinationGhostGraphic);
+        this.add(destinationGhostGraphic);
       }));
 
-      // make the graphics property available to the "outside"
-      // to mock what a developer might want from a GraphicsLayer, FeatureLayer, etc.
-      this.graphics = this._ghostGraphicsLayer.graphics;
+      this._redrawCanvas();
     }
   });
 });
