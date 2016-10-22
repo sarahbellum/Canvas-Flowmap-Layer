@@ -73,22 +73,24 @@ require([
       cityToCityLayer.selectGraphicsForPathDisplay(evt.sharedOriginGraphics, 'SELECTION_ADD');
       cityToCityLayer.selectGraphicsForPathDisplay(evt.sharedDestinationGraphics, 'SELECTION_ADD');
     });
+
+    // visibility and add/removing tests
+
+    // map.on('click', function() {
+    //   cityToCityLayer.hide();
+    //   setTimeout(function() {
+    //     cityToCityLayer.show();
+    //   }, 5000);
+    // });
+
+    // map.on('click', function() {
+    //   map.removeLayer(cityToCityLayer);
+    //   setTimeout(function() {
+    //     map.addLayer(cityToCityLayer);
+    //     cityToCityLayer.setVisibility(true);
+    //   }, 5000);
+    // });
+
   });
 
-  // visibility and add/removing tests
-
-  // map.on('click', function() {
-  //   cityToCityLayer.hide();
-  //   setTimeout(function() {
-  //     cityToCityLayer.show();
-  //   }, 5000);
-  // });
-
-  // map.on('click', function() {
-  //   map.removeLayer(cityToCityLayer);
-  //   setTimeout(function() {
-  //     map.addLayer(cityToCityLayer);
-  //     cityToCityLayer.setVisibility(true);
-  //   }, 5000);
-  // });
 });

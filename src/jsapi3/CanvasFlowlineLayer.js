@@ -85,6 +85,8 @@ define([
         }
       }));
 
+      // pausable listeners
+
       // user finishes zooming or panning the map
       this._listeners.push(on.pausable(this._map, 'extent-change', lang.hitch(this, '_redrawCanvas')));
 
@@ -111,7 +113,7 @@ define([
           evt.sharedOriginGraphics = this.graphics.filter(function(graphic) {
             return graphic.attributes._isOrigin &&
               graphic.attributes[originUniqueIdField] === evtGraphicOriginId;
-          }, this);
+          });
         } else {
           // for a DESTINATION point that was interacted with,
           // make an array of all other ORIGIN graphics with the same DESTINATION ID field
@@ -120,10 +122,11 @@ define([
           evt.sharedDestinationGraphics = this.graphics.filter(function(graphic) {
             return graphic.attributes._isOrigin &&
               graphic.attributes[destinationUniqueIdField] === evtGraphicDestinationId;
-          }, this);
+          });
         }
       })));
-      // pause or resume the listeners depending on initial visibility
+
+      // pause or resume the pausable listeners depending on initial layer visibility
       this._toggleListeners();
     },
 
@@ -164,12 +167,12 @@ define([
 
       // reset canvas element position and pan delta info
       // for the next panning events
+      canvasElement.style.left = '0px';
+      canvasElement.style.top = '0px';
       this._previousPanDelta = {
         x: 0,
         y: 0
       };
-      canvasElement.style.left = '0px';
-      canvasElement.style.top = '0px';
     },
 
     _redrawCanvas: function() {
@@ -192,9 +195,10 @@ define([
       var modifyLeft = evt.delta.x - this._previousPanDelta.x;
       var modifyTop = evt.delta.y - this._previousPanDelta.y;
 
+      // set canvas element position
       canvasElement.style.left = canvasLeft + modifyLeft + 'px';
       canvasElement.style.top = canvasTop + modifyTop + 'px';
-
+      // set pan delta info for the next panning events
       this._previousPanDelta = evt.delta;
     },
 
@@ -254,8 +258,8 @@ define([
       clonedGraphicJson.geometry.y = clonedGraphicJson.attributes[configGeometryObject.y];
       clonedGraphicJson.geometry.spatialReference = new SpatialReference(configGeometryObject.spatialReference.wkid);
 
-      var graphic = new Graphic(clonedGraphicJson);
-      graphic.setAttributes(lang.mixin(graphic.attributes, {
+      var ghostGraphic = new Graphic(clonedGraphicJson);
+      ghostGraphic.setAttributes(lang.mixin(ghostGraphic.attributes, {
         _isOrigin: isOrigin,
         _isSelectedForPathDisplay: this.pathDisplayMode === 'all' && isOrigin ? true : false,
         _isSelectedForHighlight: false,
@@ -271,27 +275,34 @@ define([
       if (configCirclePropertyObject.type === 'simple') {
         ghostSymbolRadius = configCirclePropertyObject.symbol.radius;
       } else if (configCirclePropertyObject.type === 'uniqueValue') {
-        ghostSymbolRadius = configCirclePropertyObject.uniqueValueInfos.filter(lang.hitch(this, function(info) {
-          return info.value === graphic.attributes[configCirclePropertyObject.field];
-        }))[0].symbol.radius;
+        ghostSymbolRadius = configCirclePropertyObject.uniqueValueInfos.filter(function(info) {
+          return info.value === ghostGraphic.attributes[configCirclePropertyObject.field];
+        })[0].symbol.radius;
       }
       ghostSymbol.setSize(ghostSymbolRadius * 2);
 
       ghostSymbol.outline.setColor(new Color([0, 0, 0, 0]));
       ghostSymbol.outline.setWidth(0);
-      graphic.setSymbol(ghostSymbol);
 
-      return graphic;
+      ghostGraphic.setSymbol(ghostSymbol);
+
+      return ghostGraphic;
     },
 
     _drawAllCanvasPoints: function() {
       var canvasElement = this._getCustomCanvasElement();
+      var destinationUniqueIdField = this.originAndDestinationFieldIds.destinationUniqueIdField;
 
       // reset a temporary tracking array to make sure only 1 copy of each destination point gets drawn on the canvas
       var destinationUniqueIdValues = [];
 
-      // loop over all graphic objects in the csvGraphicsLayer
-      this.graphics.forEach(lang.hitch(this, function(graphic) {
+      // TODO: does the following logic still hold for these origin-to-destination relationships?
+      //  - 1-to-1
+      //  - 1-to-many
+      //  - many-to-1
+
+      // loop over all graphics
+      this.graphics.forEach(function(graphic) {
         if (graphic.attributes._isOrigin) {
           // re-draw all the origin points using the canvas
           if (graphic.attributes._isSelectedForHighlight) {
@@ -299,11 +310,11 @@ define([
           } else {
             this._drawNewCanvasPoint(graphic, canvasElement, this.originCircleProperties);
           }
-        } else if (destinationUniqueIdValues.indexOf(graphic.attributes[this.originAndDestinationFieldIds.destinationUniqueIdField]) === -1) {
+        } else if (destinationUniqueIdValues.indexOf(graphic.attributes[destinationUniqueIdField]) === -1) {
           // re-draw only 1 copy of each unique destination point using the canvas
           // and add the unique value value to the "destinationUniqueIdValues" array for tracking and comparison
-          // NOTE: all of the "ghost" graphics will still be available for the click listener in the csvGraphicsLayer
-          destinationUniqueIdValues.push(graphic.attributes[this.originAndDestinationFieldIds.destinationUniqueIdField]);
+          // NOTE: all of the "ghost" graphics will still be available for the click and mouse-over listeners
+          destinationUniqueIdValues.push(graphic.attributes[destinationUniqueIdField]);
 
           if (graphic.attributes._isSelectedForHighlight) {
             this._drawNewCanvasPoint(graphic, canvasElement, this.destinationHighlightCircleProperties);
@@ -311,7 +322,7 @@ define([
             this._drawNewCanvasPoint(graphic, canvasElement, this.destinationCircleProperties);
           }
         }
-      }));
+      }, this);
     },
 
     _drawNewCanvasPoint: function(graphic, canvasElement, circleProperties) {
@@ -330,7 +341,7 @@ define([
     },
 
     _applyCanvasPointSymbol: function(canvasElement, symbolObject, screenPoint) {
-      var ctx = canvasElement.getContext('2d'); // get a CanvasRenderingContext2D
+      var ctx = canvasElement.getContext('2d');
       ctx.globalCompositeOperation = symbolObject.globalCompositeOperation;
       ctx.fillStyle = symbolObject.fillStyle;
       ctx.lineWidth = symbolObject.lineWidth;
@@ -346,17 +357,26 @@ define([
     _drawSelectedCanvasPaths: function() {
       var canvasElement = this._getCustomCanvasElement();
 
-      this.graphics.forEach(lang.hitch(this, function(graphic) {
+      var originAndDestinationFieldIds = this.originAndDestinationFieldIds;
+
+      this.graphics.forEach(function(graphic) {
         if (graphic.attributes._isSelectedForPathDisplay) {
-          var originLon = graphic.attributes[this.originAndDestinationFieldIds.originGeometry.x];
-          var originLat = graphic.attributes[this.originAndDestinationFieldIds.originGeometry.y];
-          var destinationLon = graphic.attributes[this.originAndDestinationFieldIds.destinationGeometry.x];
-          var destinationLat = graphic.attributes[this.originAndDestinationFieldIds.destinationGeometry.y];
+          var originXCoordinate = graphic.attributes[originAndDestinationFieldIds.originGeometry.x];
+          var originYCoordinate = graphic.attributes[originAndDestinationFieldIds.originGeometry.y];
+          var destinationXCoordinate = graphic.attributes[originAndDestinationFieldIds.destinationGeometry.x];
+          var destinationYCoordinate = graphic.attributes[originAndDestinationFieldIds.destinationGeometry.y];
           var spatialReference = graphic.geometry.spatialReference;
 
-          this._drawNewCanvasPath(originLon, originLat, destinationLon, destinationLat, spatialReference, canvasElement, this.pathProperties, graphic.attributes);
+          this._drawNewCanvasPath(
+            originXCoordinate, originYCoordinate,
+            destinationXCoordinate, destinationYCoordinate,
+            spatialReference,
+            canvasElement,
+            this.pathProperties,
+            graphic.attributes
+          );
         }
-      }));
+      }, this);
     },
 
     _drawNewCanvasPath: function(originXCoordinate, originYCoordinate, destinationXCoordinate, destinationYCoordinate, spatialReference, canvasElement, pathProperties, graphicAttributes) {
@@ -384,7 +404,7 @@ define([
     },
 
     _applyCanvasLineSymbol: function(canvasElement, symbolObject, screenOriginPoint, screenDestinationPoint) {
-      var ctx = canvasElement.getContext('2d'); // get a CanvasRenderingContext2D
+      var ctx = canvasElement.getContext('2d');
       ctx.lineCap = symbolObject.lineCap;
       ctx.strokeStyle = symbolObject.strokeStyle;
       ctx.shadowBlur = symbolObject.shadowBlur;
@@ -404,6 +424,7 @@ define([
       this.graphics.forEach(function(graphic) {
         graphic.attributes._isSelectedForPathDisplay = false;
       });
+
       this._redrawCanvas();
     },
 
@@ -411,6 +432,7 @@ define([
       this.graphics.forEach(function(graphic) {
         graphic.attributes._isSelectedForHighlight = false;
       });
+
       this._redrawCanvas();
     },
 
@@ -423,19 +445,19 @@ define([
     },
 
     addGraphics: function(inputGraphics) {
-      inputGraphics.forEach(lang.hitch(this, function(inputGraphic, index) {
-        var inputGraphicJson = inputGraphic.toJson();
+      inputGraphics.forEach(function(inputGraphic, index) {
+        if (inputGraphic.declaredClass === 'esri.Graphic') {
+          var inputGraphicJson = inputGraphic.toJson();
 
-        // origin point
-        var originGhostGraphic = this._constructGhostGraphic(inputGraphicJson, true, index + '_o');
-        // this._ghostGraphicsLayer.add(originGhostGraphic);
-        this.add(originGhostGraphic);
+          // origin point
+          var originGhostGraphic = this._constructGhostGraphic(inputGraphicJson, true, index + '_o');
+          this.add(originGhostGraphic);
 
-        // destination point
-        var destinationGhostGraphic = this._constructGhostGraphic(inputGraphicJson, false, index + '_d');
-        // this._ghostGraphicsLayer.add(destinationGhostGraphic);
-        this.add(destinationGhostGraphic);
-      }));
+          // destination point
+          var destinationGhostGraphic = this._constructGhostGraphic(inputGraphicJson, false, index + '_d');
+          this.add(destinationGhostGraphic);
+        }
+      }, this);
 
       this._redrawCanvas();
     }
