@@ -71,6 +71,52 @@ define([
     // },
 
     /*
+    PUBLIC METHODS
+    */
+
+    clearAllPathSelections: function() {
+      this.graphics.forEach(function(graphic) {
+        graphic.attributes._isSelectedForPathDisplay = false;
+      });
+
+      this._redrawCanvas();
+    },
+
+    clearAllHighlightSelections: function() {
+      this.graphics.forEach(function(graphic) {
+        graphic.attributes._isSelectedForHighlight = false;
+      });
+
+      this._redrawCanvas();
+    },
+
+    selectGraphicsForPathDisplay: function(selectionGraphics, selectionMode) {
+      this._applyGraphicsSelection(selectionGraphics, selectionMode, '_isSelectedForPathDisplay');
+    },
+
+    selectGraphicsForHighlight: function(selectionGraphics, selectionMode) {
+      this._applyGraphicsSelection(selectionGraphics, selectionMode, '_isSelectedForHighlight');
+    },
+
+    addGraphics: function(inputGraphics) {
+      inputGraphics.forEach(function(inputGraphic, index) {
+        if (inputGraphic.declaredClass === 'esri.Graphic') {
+          var inputGraphicJson = inputGraphic.toJson();
+
+          // origin point
+          var originGhostGraphic = this._constructGhostGraphic(inputGraphicJson, true, index + '_o');
+          this.add(originGhostGraphic);
+
+          // destination point
+          var destinationGhostGraphic = this._constructGhostGraphic(inputGraphicJson, false, index + '_d');
+          this.add(destinationGhostGraphic);
+        }
+      }, this);
+
+      this._redrawCanvas();
+    },
+
+    /*
     PRIVATE METHODS
     */
 
@@ -414,52 +460,7 @@ define([
       ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
       ctx.stroke();
       ctx.closePath();
-    },
-
-    /*
-    PUBLIC METHODS
-    */
-
-    clearAllPathSelections: function() {
-      this.graphics.forEach(function(graphic) {
-        graphic.attributes._isSelectedForPathDisplay = false;
-      });
-
-      this._redrawCanvas();
-    },
-
-    clearAllHighlightSelections: function() {
-      this.graphics.forEach(function(graphic) {
-        graphic.attributes._isSelectedForHighlight = false;
-      });
-
-      this._redrawCanvas();
-    },
-
-    selectGraphicsForPathDisplay: function(selectionGraphics, selectionMode) {
-      this._applyGraphicsSelection(selectionGraphics, selectionMode, '_isSelectedForPathDisplay');
-    },
-
-    selectGraphicsForHighlight: function(selectionGraphics, selectionMode) {
-      this._applyGraphicsSelection(selectionGraphics, selectionMode, '_isSelectedForHighlight');
-    },
-
-    addGraphics: function(inputGraphics) {
-      inputGraphics.forEach(function(inputGraphic, index) {
-        if (inputGraphic.declaredClass === 'esri.Graphic') {
-          var inputGraphicJson = inputGraphic.toJson();
-
-          // origin point
-          var originGhostGraphic = this._constructGhostGraphic(inputGraphicJson, true, index + '_o');
-          this.add(originGhostGraphic);
-
-          // destination point
-          var destinationGhostGraphic = this._constructGhostGraphic(inputGraphicJson, false, index + '_d');
-          this.add(destinationGhostGraphic);
-        }
-      }, this);
-
-      this._redrawCanvas();
     }
+
   });
 });
