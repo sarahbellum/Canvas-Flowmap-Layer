@@ -87,7 +87,6 @@ require([
     //   map.removeLayer(cityToCityLayer);
     //   setTimeout(function() {
     //     map.addLayer(cityToCityLayer);
-    //     cityToCityLayer.setVisibility(true);
     //   }, 5000);
     // });
 

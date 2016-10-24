@@ -42,7 +42,10 @@ define([
     // TODO: test out and finalize which GraphicsLayer methods need to be overridden
 
     _setMap: function() {
-      var div = this.inherited(arguments);
+      var div = this.inherited(arguments); // required for JSAPI
+
+      this._canvasElement = this._getCustomCanvasElement();
+
       if (this._listeners.length) {
         this._toggleListeners();
         if (this.visible) {
@@ -51,7 +54,8 @@ define([
       } else {
         this._initListeners();
       }
-      return div;
+
+      return div; // required for JSAPI
     },
 
     _unsetMap: function() {
@@ -207,14 +211,13 @@ define([
       // clear out previous drawn canvas content
       // e.g. when a zoom begins,
       // or just prior to changing the displayed contents in the canvas
-      var canvasElement = this._getCustomCanvasElement();
-      var ctx = canvasElement.getContext('2d');
-      ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      var ctx = this._canvasElement.getContext('2d');
+      ctx.clearRect(0, 0, this._canvasElement.width, this._canvasElement.height);
 
       // reset canvas element position and pan delta info
       // for the next panning events
-      canvasElement.style.left = '0px';
-      canvasElement.style.top = '0px';
+      this._canvasElement.style.left = '0px';
+      this._canvasElement.style.top = '0px';
       this._previousPanDelta = {
         x: 0,
         y: 0
@@ -233,26 +236,24 @@ define([
 
     _panCanvas: function(evt) {
       // move the canvas while the map is being panned
-      var canvasElement = this._getCustomCanvasElement();
 
-      var canvasLeft = Number(canvasElement.style.left.split('px')[0]);
-      var canvasTop = Number(canvasElement.style.top.split('px')[0]);
+      var canvasLeft = Number(this._canvasElement.style.left.split('px')[0]);
+      var canvasTop = Number(this._canvasElement.style.top.split('px')[0]);
 
       var modifyLeft = evt.delta.x - this._previousPanDelta.x;
       var modifyTop = evt.delta.y - this._previousPanDelta.y;
 
       // set canvas element position
-      canvasElement.style.left = canvasLeft + modifyLeft + 'px';
-      canvasElement.style.top = canvasTop + modifyTop + 'px';
+      this._canvasElement.style.left = canvasLeft + modifyLeft + 'px';
+      this._canvasElement.style.top = canvasTop + modifyTop + 'px';
       // set pan delta info for the next panning events
       this._previousPanDelta = evt.delta;
     },
 
     _resizeCanvas: function() {
       // resize the canvas if the map was resized
-      var canvasElement = this._getCustomCanvasElement();
-      canvasElement.width = this._map.width;
-      canvasElement.height = this._map.height;
+      this._canvasElement.width = this._map.width;
+      this._canvasElement.height = this._map.height;
     },
 
     _applyGraphicsSelection: function(selectionGraphics, selectionMode, selectionAttributeName) {
@@ -336,11 +337,17 @@ define([
     },
 
     _drawAllCanvasPoints: function() {
-      var canvasElement = this._getCustomCanvasElement();
-      var destinationUniqueIdField = this.originAndDestinationFieldIds.destinationUniqueIdField;
 
-      // reset a temporary tracking array to make sure only 1 copy of each destination point gets drawn on the canvas
+      // re-draw only 1 copy of each unique ORIGIN or DESTINATION point using the canvas
+      // and add the unique value value to the appropriate array for tracking and comparison
+      // NOTE: all of the "ghost" graphics will still be available for the click and mouse-over listeners
+
+      // reset temporary tracking arrays to make sure only 1 copy of each origin or destination point gets drawn on the canvas
+      var originUniqueIdValues = [];
       var destinationUniqueIdValues = [];
+
+      var originUniqueIdField = this.originAndDestinationFieldIds.originUniqueIdField;
+      var destinationUniqueIdField = this.originAndDestinationFieldIds.destinationUniqueIdField;
 
       // TODO: does the following logic still hold for these origin-to-destination relationships?
       //  - 1-to-1
@@ -349,45 +356,45 @@ define([
 
       // loop over all graphics
       this.graphics.forEach(function(graphic) {
-        if (graphic.attributes._isOrigin) {
-          // re-draw all the origin points using the canvas
-          if (graphic.attributes._isSelectedForHighlight) {
-            this._drawNewCanvasPoint(graphic, canvasElement, this.originHighlightCircleProperties);
-          } else {
-            this._drawNewCanvasPoint(graphic, canvasElement, this.originCircleProperties);
-          }
-        } else if (destinationUniqueIdValues.indexOf(graphic.attributes[destinationUniqueIdField]) === -1) {
-          // re-draw only 1 copy of each unique destination point using the canvas
-          // and add the unique value value to the "destinationUniqueIdValues" array for tracking and comparison
-          // NOTE: all of the "ghost" graphics will still be available for the click and mouse-over listeners
-          destinationUniqueIdValues.push(graphic.attributes[destinationUniqueIdField]);
+        var attributes = graphic.attributes;
+        var isOrigin = attributes._isOrigin;
+        var canvasCircleProperties;
 
-          if (graphic.attributes._isSelectedForHighlight) {
-            this._drawNewCanvasPoint(graphic, canvasElement, this.destinationHighlightCircleProperties);
-          } else {
-            this._drawNewCanvasPoint(graphic, canvasElement, this.destinationCircleProperties);
-          }
+        if (isOrigin && originUniqueIdValues.indexOf(attributes[originUniqueIdField]) === -1) {
+          originUniqueIdValues.push(attributes[originUniqueIdField]);
+          canvasCircleProperties = attributes._isSelectedForHighlight ? this.originHighlightCircleProperties : this.originCircleProperties;
+
+          this._drawNewCanvasPoint(graphic, canvasCircleProperties);
+        } else if (!isOrigin && destinationUniqueIdValues.indexOf(attributes[destinationUniqueIdField]) === -1) {
+          destinationUniqueIdValues.push(attributes[destinationUniqueIdField]);
+          canvasCircleProperties = attributes._isSelectedForHighlight ? this.destinationHighlightCircleProperties : this.destinationCircleProperties;
+
+          this._drawNewCanvasPoint(graphic, canvasCircleProperties);
         }
+
       }, this);
     },
 
-    _drawNewCanvasPoint: function(graphic, canvasElement, circleProperties) {
-      // convert to screen coordinates for canvas drawing
+    _drawNewCanvasPoint: function(graphic, canvasCircleProperties) {
+      // get the canvas symbol properties
+      var symbol;
+      if (canvasCircleProperties.type === 'simple') {
+        symbol = canvasCircleProperties.symbol;
+      } else if (canvasCircleProperties.type === 'uniqueValue') {
+        symbol = canvasCircleProperties.uniqueValueInfos.filter(function(info) {
+          return info.value === graphic.attributes[canvasCircleProperties.field];
+        })[0].symbol;
+      }
+
+      // convert geometry to screen coordinates for canvas drawing
       var screenPoint = this._map.toScreen(graphic.geometry);
 
       // draw a circle point on the canvas
-      if (circleProperties.type === 'simple') {
-        this._applyCanvasPointSymbol(canvasElement, circleProperties.symbol, screenPoint);
-      } else if (circleProperties.type === 'uniqueValue') {
-        var symbol = circleProperties.uniqueValueInfos.filter(function(info) {
-          return info.value === graphic.attributes[circleProperties.field];
-        })[0].symbol;
-        this._applyCanvasPointSymbol(canvasElement, symbol, screenPoint);
-      }
+      this._applyCanvasPointSymbol(symbol, screenPoint);
     },
 
-    _applyCanvasPointSymbol: function(canvasElement, symbolObject, screenPoint) {
-      var ctx = canvasElement.getContext('2d');
+    _applyCanvasPointSymbol: function(symbolObject, screenPoint) {
+      var ctx = this._canvasElement.getContext('2d');
       ctx.globalCompositeOperation = symbolObject.globalCompositeOperation;
       ctx.fillStyle = symbolObject.fillStyle;
       ctx.lineWidth = symbolObject.lineWidth;
@@ -401,56 +408,54 @@ define([
     },
 
     _drawSelectedCanvasPaths: function() {
-      var canvasElement = this._getCustomCanvasElement();
-
       var originAndDestinationFieldIds = this.originAndDestinationFieldIds;
 
       this.graphics.forEach(function(graphic) {
-        if (graphic.attributes._isSelectedForPathDisplay) {
-          var originXCoordinate = graphic.attributes[originAndDestinationFieldIds.originGeometry.x];
-          var originYCoordinate = graphic.attributes[originAndDestinationFieldIds.originGeometry.y];
-          var destinationXCoordinate = graphic.attributes[originAndDestinationFieldIds.destinationGeometry.x];
-          var destinationYCoordinate = graphic.attributes[originAndDestinationFieldIds.destinationGeometry.y];
+        var attributes = graphic.attributes;
+
+        if (attributes._isSelectedForPathDisplay) {
+          var originXCoordinate = attributes[originAndDestinationFieldIds.originGeometry.x];
+          var originYCoordinate = attributes[originAndDestinationFieldIds.originGeometry.y];
+          var destinationXCoordinate = attributes[originAndDestinationFieldIds.destinationGeometry.x];
+          var destinationYCoordinate = attributes[originAndDestinationFieldIds.destinationGeometry.y];
           var spatialReference = graphic.geometry.spatialReference;
 
           this._drawNewCanvasPath(
+            this.pathProperties,
+            attributes,
             originXCoordinate, originYCoordinate,
             destinationXCoordinate, destinationYCoordinate,
-            spatialReference,
-            canvasElement,
-            this.pathProperties,
-            graphic.attributes
+            spatialReference
           );
         }
       }, this);
     },
 
-    _drawNewCanvasPath: function(originXCoordinate, originYCoordinate, destinationXCoordinate, destinationYCoordinate, spatialReference, canvasElement, pathProperties, graphicAttributes) {
-      // origin point for drawing curved lines
+    _drawNewCanvasPath: function(canvasPathProperties, graphicAttributes, originXCoordinate, originYCoordinate, destinationXCoordinate, destinationYCoordinate, spatialReference) {
+      // get the canvas symbol properties
+      var symbol;
+      if (canvasPathProperties.type === 'simple') {
+        symbol = canvasPathProperties.symbol;
+      } else if (canvasPathProperties.type === 'uniqueValue') {
+        symbol = canvasPathProperties.uniqueValueInfos.filter(function(info) {
+          return info.value === graphicAttributes[canvasPathProperties.field];
+        })[0].symbol;
+      }
+
+      // origin and destination points for drawing curved lines
       var originPoint = new Point(originXCoordinate, originYCoordinate, spatialReference);
-
-      // convert to screen coordinates for canvas drawing
-      var screenOriginPoint = this._map.toScreen(originPoint);
-
-      // destination point for drawing curved lines
       var destinationPoint = new Point(destinationXCoordinate, destinationYCoordinate, spatialReference);
 
-      // convert to screen coordinates for canvas drawing
+      // convert geometries to screen coordinates for canvas drawing
+      var screenOriginPoint = this._map.toScreen(originPoint);
       var screenDestinationPoint = this._map.toScreen(destinationPoint);
 
       // draw a curved canvas line
-      if (pathProperties.type === 'simple') {
-        this._applyCanvasLineSymbol(canvasElement, pathProperties.symbol, screenOriginPoint, screenDestinationPoint);
-      } else if (pathProperties.type === 'uniqueValue') {
-        var symbol = pathProperties.uniqueValueInfos.filter(function(info) {
-          return info.value === graphicAttributes[pathProperties.field];
-        })[0].symbol;
-        this._applyCanvasLineSymbol(canvasElement, symbol, screenOriginPoint, screenDestinationPoint);
-      }
+      this._applyCanvasLineSymbol(symbol, screenOriginPoint, screenDestinationPoint);
     },
 
-    _applyCanvasLineSymbol: function(canvasElement, symbolObject, screenOriginPoint, screenDestinationPoint) {
-      var ctx = canvasElement.getContext('2d');
+    _applyCanvasLineSymbol: function(symbolObject, screenOriginPoint, screenDestinationPoint) {
+      var ctx = this._canvasElement.getContext('2d');
       ctx.lineCap = symbolObject.lineCap;
       ctx.strokeStyle = symbolObject.strokeStyle;
       ctx.shadowBlur = symbolObject.shadowBlur;
