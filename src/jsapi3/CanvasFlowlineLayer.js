@@ -1,24 +1,24 @@
 define([
-  'dojo/_base/lang',
   'dojo/_base/declare',
+  'dojo/_base/lang',
   'dojo/dom',
   'dojo/dom-construct',
-  'dojo/Evented',
   'dojo/on',
 
   'esri/Color',
-  'esri/layers/GraphicsLayer',
+  'esri/geometry/Point',
   'esri/graphic',
+  'esri/layers/GraphicsLayer',
   'esri/SpatialReference',
-  'esri/symbols/SimpleMarkerSymbol',
-  'esri/geometry/Point'
+  'esri/symbols/SimpleMarkerSymbol'
 ], function(
-  lang, declare, dom, domConstruct, Evented, on,
-  Color, GraphicsLayer, Graphic, SpatialReference, SimpleMarkerSymbol, Point
+  declare, lang, dom, domConstruct, on,
+  Color, Point, Graphic, GraphicsLayer, SpatialReference, SimpleMarkerSymbol
 ) {
   return declare([GraphicsLayer], {
     constructor: function(options) {
       // public options/properties
+      // TODO: add default values
       this.originAndDestinationFieldIds = options.originAndDestinationFieldIds || null;
       this.originCircleProperties = options.originCircleProperties || null;
       this.originHighlightCircleProperties = options.originHighlightCircleProperties || null;
@@ -87,19 +87,19 @@ define([
 
       // pausable listeners
 
-      // user finishes zooming or panning the map
+      // when user finishes zooming or panning the map
       this._listeners.push(on.pausable(this._map, 'extent-change', lang.hitch(this, '_redrawCanvas')));
 
-      // user begins zooming the map
+      // when user begins zooming the map
       this._listeners.push(on.pausable(this._map, 'zoom-start', lang.hitch(this, '_clearCanvas')));
 
-      // user is currently panning the map
+      // when user is actively panning the map
       this._listeners.push(on.pausable(this._map, 'pan', lang.hitch(this, '_panCanvas')));
 
-      // map was resized in the browser
+      // when map is resized in the browser
       this._listeners.push(on.pausable(this._map, 'resize', lang.hitch(this, '_resizeCanvas')));
 
-      // user interacts with a graphic by click on or mouse-over
+      // when user interacts with a graphic by click, mouse-over, or mouse-out
       this._listeners.push(on.pausable(this, 'click,mouse-over', lang.hitch(this, function(evt) {
         var isOriginGraphic = evt.isOriginGraphic = evt.graphic.attributes._isOrigin;
         evt.sharedOriginGraphics = [];
