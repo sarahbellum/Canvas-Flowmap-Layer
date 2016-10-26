@@ -457,6 +457,7 @@ define([
     _applyCanvasLineSymbol: function(symbolObject, screenOriginPoint, screenDestinationPoint) {
       var ctx = this._canvasElement.getContext('2d');
       ctx.lineCap = symbolObject.lineCap;
+      ctx.lineWidth = symbolObject.lineWidth;
       ctx.strokeStyle = symbolObject.strokeStyle;
       ctx.shadowBlur = symbolObject.shadowBlur;
       ctx.shadowColor = symbolObject.shadowColor;

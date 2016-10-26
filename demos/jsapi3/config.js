@@ -30,9 +30,9 @@ define([], function() {
         symbol: {
           globalCompositeOperation: 'destination-over',
           radius: 5,
-          fillStyle: 'rgba(250, 140, 44, 0.47)',
+          fillStyle: 'rgba(0, 255, 29, 0.75)',
           lineWidth: 1,
-          strokeStyle: 'rgba(255, 137, 0, 0.6)',
+          strokeStyle: 'rgb(0, 255, 29)',
           shadowBlur: 0
         }
       },
@@ -42,9 +42,9 @@ define([], function() {
         symbol: {
           globalCompositeOperation: 'destination-over',
           radius: 5.5,
-          fillStyle: 'rgba(250, 140, 44, 0.47)',
+          fillStyle: 'rgba(0, 198, 0, 0.78)',
           lineWidth: 4,
-          strokeStyle: 'rgb(255, 0, 51)',
+          strokeStyle: 'rgb(207, 0, 51)',
           shadowBlur: 0
         }
       },
@@ -53,9 +53,9 @@ define([], function() {
         type: 'simple',
         symbol: {
           globalCompositeOperation: 'destination-over',
-          radius: 8,
-          fillStyle: 'rgba(87, 216, 255, 0.5)',
-          lineWidth: 0.5,
+          radius: 2,
+          fillStyle: 'rgba(87, 216, 255, 0.75)',
+          lineWidth: 0.25,
           strokeStyle: 'rgb(61, 225, 255)',
           shadowBlur: 0
         }
@@ -65,8 +65,8 @@ define([], function() {
         type: 'simple',
         symbol: {
           globalCompositeOperation: 'destination-over',
-          radius: 8,
-          fillStyle: 'rgba(87, 216, 255, 0.5)',
+          radius: 2,
+          fillStyle: 'rgba(87, 216, 255, 0.75)',
           lineWidth: 6,
           strokeStyle: 'rgb(255, 0, 51)',
           shadowBlur: 0
@@ -76,9 +76,10 @@ define([], function() {
       pathProperties: {
         type: 'simple',
         symbol: {
-          strokeStyle: 'rgba(255, 0, 51, 0.5)',
-          shadowBlur: 2,
-          shadowColor: 'rgb(255, 0, 51)',
+          strokeStyle: 'rgba(207, 241, 17, 0.8)',
+          shadowBlur: 1.5,
+          lineWidth: 0.5,
+          shadowColor: 'rgb(207, 241, 17)',
           lineCap: 'round'
         }
       },
