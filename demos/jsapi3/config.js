@@ -23,32 +23,6 @@ define([], function() {
         }
       },
 
-      // canvas symbol properties are based on Esri REST API simple renderer and unique value renderer specifications
-      // http://resources.arcgis.com/en/help/arcgis-rest-api/#/Renderer_objects/02r30000019t000000/
-      originCircleProperties: {
-        type: 'simple',
-        symbol: {
-          globalCompositeOperation: 'destination-over',
-          radius: 5,
-          fillStyle: 'rgba(0, 255, 29, 0.75)',
-          lineWidth: 1,
-          strokeStyle: 'rgb(0, 255, 29)',
-          shadowBlur: 0
-        }
-      },
-
-      originHighlightCircleProperties: {
-        type: 'simple',
-        symbol: {
-          globalCompositeOperation: 'destination-over',
-          radius: 5.5,
-          fillStyle: 'rgba(0, 198, 0, 0.78)',
-          lineWidth: 4,
-          strokeStyle: 'rgb(207, 0, 51)',
-          shadowBlur: 0
-        }
-      },
-
       destinationCircleProperties: {
         type: 'simple',
         symbol: {
@@ -112,6 +86,8 @@ define([], function() {
     }
   };
 });
+
+// EXAMPLE OF SYMBOL PROPERTIES WITH CATEGORICAL UNQIUE VALUES:
 
 // destinationCircleProperties: {
 //   type: 'uniqueValue',

@@ -27,9 +27,9 @@ require([
       id: 'cityToCityLayer',
       visible: true,
       // CanvasFlowlineLayer custom constructor properties
+      // required
       originAndDestinationFieldIds: config.cityToCityLayer.originAndDestinationFieldIds,
-      originCircleProperties: config.cityToCityLayer.originCircleProperties,
-      originHighlightCircleProperties: config.cityToCityLayer.originHighlightCircleProperties,
+      // optional
       destinationCircleProperties: config.cityToCityLayer.destinationCircleProperties,
       destinationHighlightCircleProperties: config.cityToCityLayer.destinationHighlightCircleProperties,
       pathProperties: config.cityToCityLayer.pathProperties,
@@ -39,7 +39,7 @@ require([
     map.addLayer(cityToCityLayer);
 
     // NOTE: the CSVLayer is only used now to fetch and parse the CSV data
-    // we could have also used the d3js to load the CSV data
+    // we could have also used a library like D3js to load the CSV data
     var csvData = new CSVLayer('../../csv/Flowline_Cities_one_to_many.csv', {
       fields: config.cityToCityLayer.csvAttributeDefinitions,
       outFields: config.cityToCityLayer.csvAttributeDefinitions.map(function(attrDef) {
@@ -53,7 +53,8 @@ require([
 
     csvData.on('update-end', function() {
       if (csvData.graphics.length) {
-        // remove the temporary CSVLayer from the map
+        // remove the temporary CSVLayer from the map,
+        // since we're done parsing the CSV data into Esri graphics
         map.removeLayer(csvData);
 
         // add all graphics to the canvas flowline layer
@@ -61,12 +62,12 @@ require([
       }
     });
 
-    cityToCityLayer.on('mouse-over', function(evt) {
-      // evt.sharedOriginGraphics and evt.sharedDestinationGraphics:
-      //  - each of these is an array containing all graphics with the same origin OR destination unique value as what was clicked on
+    cityToCityLayer.on('click', function(evt) {
+      // evt.sharedOriginGraphics: array of all ORIGIN graphics with the same ORIGIN ID field
+      // evt.sharedDestinationGraphics: array of all ORIGIN graphics with the same DESTINATION ID field
       //  - you can mark shared origin or destination graphics as selected for path display using these modes:
       //    - 'SELECTION_NEW', 'SELECTION_ADD', or 'SELECTION_SUBTRACT'
-      //  - "selected" graphics inform the canvas flowline layer which flow line paths to display
+      //  - these selected graphics inform the canvas flowline layer which flow line paths to display
 
       // NOTE: if the layer's pathDisplayMode was originally set to "all",
       // this manual selection will override the displayed flowlines
@@ -74,7 +75,7 @@ require([
       cityToCityLayer.selectGraphicsForPathDisplay(evt.sharedDestinationGraphics, 'SELECTION_ADD');
     });
 
-    // visibility and add/removing tests
+    // layer visibility and map add/remove tests
 
     // map.on('click', function() {
     //   cityToCityLayer.hide();

@@ -17,17 +17,52 @@ define([
 ) {
   return declare([GraphicsLayer], {
     constructor: function(options) {
-      // public options/properties
-      // TODO: add default values
-      this.originAndDestinationFieldIds = options.originAndDestinationFieldIds || null;
-      this.originCircleProperties = options.originCircleProperties || null;
-      this.originHighlightCircleProperties = options.originHighlightCircleProperties || null;
-      this.destinationCircleProperties = options.destinationCircleProperties || null;
-      this.destinationHighlightCircleProperties = options.destinationHighlightCircleProperties || null;
-      this.pathProperties = options.pathProperties || null;
-      this.pathDisplayMode = options.pathDisplayMode || 'all'; // 'selection' or 'all'
+      // PUBLIC properties and options
 
-      // private properties
+      // REQUIRED to be provided by the developer
+
+      this.originAndDestinationFieldIds = options.originAndDestinationFieldIds;
+
+      // OPTIONAL and not required to be provided by the developer
+
+      // canvas symbol properties are based on Esri REST API simple renderer and unique value renderer specifications
+      // http://resources.arcgis.com/en/help/arcgis-rest-api/#/Renderer_objects/02r30000019t000000/
+      // "type" can be:
+      //    - simple renderer
+      //    - unique values renderer
+      this.originCircleProperties = options.originCircleProperties || {
+        type: 'simple',
+        symbol: {
+          globalCompositeOperation: 'destination-over',
+          radius: 5,
+          fillStyle: 'rgba(0, 255, 29, 0.75)',
+          lineWidth: 1,
+          strokeStyle: 'rgb(0, 255, 29)',
+          shadowBlur: 0
+        }
+      };
+
+      this.originHighlightCircleProperties = options.originHighlightCircleProperties || {
+        type: 'simple',
+        symbol: {
+          globalCompositeOperation: 'destination-over',
+          radius: 5.5,
+          fillStyle: 'rgba(0, 198, 0, 0.78)',
+          lineWidth: 4,
+          strokeStyle: 'rgb(207, 0, 51)',
+          shadowBlur: 0
+        }
+      };
+
+      this.destinationCircleProperties = options.destinationCircleProperties || null;
+
+      this.destinationHighlightCircleProperties = options.destinationHighlightCircleProperties || null;
+
+      this.pathProperties = options.pathProperties || null;
+
+      this.pathDisplayMode = options.pathDisplayMode || 'all'; // valid values: 'selection' or 'all'
+
+      // PRIVATE properties for internal usage
       this._previousPanDelta = {
         x: 0,
         y: 0
