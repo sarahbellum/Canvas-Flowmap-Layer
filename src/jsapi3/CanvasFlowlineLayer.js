@@ -54,11 +54,40 @@ define([
         }
       };
 
-      this.destinationCircleProperties = options.destinationCircleProperties || null;
+      this.destinationCircleProperties = options.destinationCircleProperties || {
+        type: 'simple',
+        symbol: {
+          globalCompositeOperation: 'destination-over',
+          radius: 2,
+          fillStyle: 'rgba(87, 216, 255, 0.75)',
+          lineWidth: 0.25,
+          strokeStyle: 'rgb(61, 225, 255)',
+          shadowBlur: 0
+        }
+      };
 
-      this.destinationHighlightCircleProperties = options.destinationHighlightCircleProperties || null;
+      this.destinationHighlightCircleProperties = options.destinationHighlightCircleProperties || {
+        type: 'simple',
+        symbol: {
+          globalCompositeOperation: 'destination-over',
+          radius: 2,
+          fillStyle: 'rgba(87, 216, 255, 0.75)',
+          lineWidth: 6,
+          strokeStyle: 'rgb(255, 0, 51)',
+          shadowBlur: 0
+        }
+      };
 
-      this.pathProperties = options.pathProperties || null;
+      this.pathProperties = options.pathProperties || {
+        type: 'simple',
+        symbol: {
+          strokeStyle: 'rgba(207, 241, 17, 0.8)',
+          shadowBlur: 1.5,
+          lineWidth: 0.5,
+          shadowColor: 'rgb(207, 241, 17)',
+          lineCap: 'round'
+        }
+      };
 
       this.pathDisplayMode = options.pathDisplayMode || 'all'; // valid values: 'selection' or 'all'
 
