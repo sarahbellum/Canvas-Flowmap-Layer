@@ -30,9 +30,7 @@ require([
       // required
       originAndDestinationFieldIds: config.cityToCityLayer.originAndDestinationFieldIds,
       // optional
-      destinationCircleProperties: config.cityToCityLayer.destinationCircleProperties,
-      destinationHighlightCircleProperties: config.cityToCityLayer.destinationHighlightCircleProperties,
-      pathProperties: config.cityToCityLayer.pathProperties,
+      // pathProperties: config.cityToCityLayer.pathProperties,
       pathDisplayMode: 'selection' // 'selection' or 'all'
     });
 
@@ -71,8 +69,12 @@ require([
 
       // NOTE: if the layer's pathDisplayMode was originally set to "all",
       // this manual selection will override the displayed flowlines
-      cityToCityLayer.selectGraphicsForPathDisplay(evt.sharedOriginGraphics, 'SELECTION_ADD');
-      cityToCityLayer.selectGraphicsForPathDisplay(evt.sharedDestinationGraphics, 'SELECTION_ADD');
+      if (evt.sharedOriginGraphics.length) {
+        cityToCityLayer.selectGraphicsForPathDisplay(evt.sharedOriginGraphics, 'SELECTION_NEW');
+      }
+      if (evt.sharedDestinationGraphics.length) {
+        cityToCityLayer.selectGraphicsForPathDisplay(evt.sharedDestinationGraphics, 'SELECTION_NEW');
+      }
     });
 
     // layer visibility and map add/remove tests

@@ -97,6 +97,9 @@ define([
         y: 0
       };
       this._listeners = [];
+
+      this._incrementer = 0.1;
+      this._offset = 0;
     },
 
     /*
@@ -108,7 +111,9 @@ define([
     _setMap: function() {
       var div = this.inherited(arguments); // required for JSAPI
 
-      this._canvasElement = this._getCustomCanvasElement();
+      var canvasElements = this._getCustomCanvasElements();
+      this._canvasElement = canvasElements.canvasElementBottom;
+      this._animationCanvasElement = canvasElements.canvasElementTop;
 
       if (this._listeners.length) {
         this._toggleListeners();
@@ -252,23 +257,44 @@ define([
       });
     },
 
-    _getCustomCanvasElement: function() {
-      var canvasElementId = this.id;
+    _getCustomCanvasElements: function() {
+      var canvasStageElementId = this.id;
 
       // look up if it is already in the DOM
-      var canvasElement = dom.byId(canvasElementId);
+      var canvasStageElement = dom.byId(canvasStageElementId);
 
+      var canvasElementTop, canvasElementBottom;
       // if not in the DOM, create it only once
-      if (!canvasElement) {
-        canvasElement = domConstruct.create('canvas', {
-          id: canvasElementId,
+      if (!canvasStageElement) {
+        // canvasStageElement = domConstruct.create('div', {
+        //   id: canvasStageElementId,
+        //   style: 'position: relative; left: 0px; top: 0px; width: 100%; height: 100%;'
+        // }, 'map_layer0', 'after'); // TODO: find a more flexible way to add this to the right DOM position
+
+        canvasElementTop = domConstruct.create('canvas', {
+          id: canvasStageElementId + '_topCanvas',
           width: this._map.width + 'px',
           height: this._map.height + 'px',
           style: 'position: absolute; left: 0px; top: 0px;'
-        }, 'map_layer0', 'after'); // TODO: find a more flexible way to add this to the right DOM position
+          // style: 'position: absolute; left: 0px; top: 0px; z-index: 2;'
+        }, 'map_layer0', 'after');
+
+        canvasElementBottom = domConstruct.create('canvas', {
+          id: canvasStageElementId + '_bottomCanvas',
+          width: this._map.width + 'px',
+          height: this._map.height + 'px',
+          style: 'position: absolute; left: 0px; top: 0px;'
+          // style: 'position: absolute; left: 0px; top: 0px; z-index: 1;'
+        }, canvasElementTop, 'after');
+      } else {
+        canvasElementTop = dom.byId(canvasStageElementId + '_topCanvas');
+        canvasElementBottom = dom.byId(canvasStageElementId + '_bottomCanvas');
       }
 
-      return canvasElement;
+      return {
+        canvasElementTop: canvasElementTop,
+        canvasElementBottom: canvasElementBottom
+      };
     },
 
     _clearCanvas: function() {
@@ -278,10 +304,20 @@ define([
       var ctx = this._canvasElement.getContext('2d');
       ctx.clearRect(0, 0, this._canvasElement.width, this._canvasElement.height);
 
+      ctx = this._animationCanvasElement.getContext('2d');
+      ctx.clearRect(0, 0, this._animationCanvasElement.width, this._animationCanvasElement.height);
+      if (this._animationFrameId) {
+        window.cancelAnimationFrame(this._animationFrameId);
+      }
+
       // reset canvas element position and pan delta info
       // for the next panning events
       this._canvasElement.style.left = '0px';
       this._canvasElement.style.top = '0px';
+
+      this._animationCanvasElement.style.left = '0px';
+      this._animationCanvasElement.style.top = '0px';
+
       this._previousPanDelta = {
         x: 0,
         y: 0
@@ -294,7 +330,12 @@ define([
         // canvas re-drawing of all the origin/destination points
         this._drawAllCanvasPoints();
         // loop over each of the "selected" graphics and re-draw the canvas paths
-        this._drawSelectedCanvasPaths();
+        this._drawSelectedCanvasPaths(false);
+
+        if (this._animationFrameId) {
+          window.cancelAnimationFrame(this._animationFrameId);
+        }
+        this.animator();
       }
     },
 
@@ -310,6 +351,10 @@ define([
       // set canvas element position
       this._canvasElement.style.left = canvasLeft + modifyLeft + 'px';
       this._canvasElement.style.top = canvasTop + modifyTop + 'px';
+
+      this._animationCanvasElement.style.left = canvasLeft + modifyLeft + 'px';
+      this._animationCanvasElement.style.top = canvasTop + modifyTop + 'px';
+
       // set pan delta info for the next panning events
       this._previousPanDelta = evt.delta;
     },
@@ -318,6 +363,9 @@ define([
       // resize the canvas if the map was resized
       this._canvasElement.width = this._map.width;
       this._canvasElement.height = this._map.height;
+
+      this._animationCanvasElement.width = this._map.width;
+      this._animationCanvasElement.height = this._map.height;
     },
 
     _applyGraphicsSelection: function(selectionGraphics, selectionMode, selectionAttributeName) {
@@ -471,7 +519,7 @@ define([
       ctx.closePath();
     },
 
-    _drawSelectedCanvasPaths: function() {
+    _drawSelectedCanvasPaths: function(animate) {
       var originAndDestinationFieldIds = this.originAndDestinationFieldIds;
 
       this.graphics.forEach(function(graphic) {
@@ -484,18 +532,30 @@ define([
           var destinationYCoordinate = attributes[originAndDestinationFieldIds.destinationGeometry.y];
           var spatialReference = graphic.geometry.spatialReference;
 
-          this._drawNewCanvasPath(
-            this.pathProperties,
-            attributes,
-            originXCoordinate, originYCoordinate,
-            destinationXCoordinate, destinationYCoordinate,
-            spatialReference
-          );
+          if (animate) {
+            this._drawNewCanvasPath(
+              this.pathProperties,
+              attributes,
+              originXCoordinate, originYCoordinate,
+              destinationXCoordinate, destinationYCoordinate,
+              spatialReference,
+              animate
+            );
+          } else {
+            this._drawNewCanvasPath(
+              this.pathProperties,
+              attributes,
+              originXCoordinate, originYCoordinate,
+              destinationXCoordinate, destinationYCoordinate,
+              spatialReference
+            );
+          }
+
         }
       }, this);
     },
 
-    _drawNewCanvasPath: function(canvasPathProperties, graphicAttributes, originXCoordinate, originYCoordinate, destinationXCoordinate, destinationYCoordinate, spatialReference) {
+    _drawNewCanvasPath: function(canvasPathProperties, graphicAttributes, originXCoordinate, originYCoordinate, destinationXCoordinate, destinationYCoordinate, spatialReference, animate) {
       // get the canvas symbol properties
       var symbol;
       if (canvasPathProperties.type === 'simple') {
@@ -515,7 +575,11 @@ define([
       var screenDestinationPoint = this._map.toScreen(destinationPoint);
 
       // draw a curved canvas line
-      this._applyCanvasLineSymbol(symbol, screenOriginPoint, screenDestinationPoint);
+      if (animate) {
+        this._animateCanvasLineSymbol(symbol, screenOriginPoint, screenDestinationPoint);
+      } else {
+        this._applyCanvasLineSymbol(symbol, screenOriginPoint, screenDestinationPoint);
+      }
     },
 
     _applyCanvasLineSymbol: function(symbolObject, screenOriginPoint, screenDestinationPoint) {
@@ -530,6 +594,60 @@ define([
       ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
       ctx.stroke();
       ctx.closePath();
+    },
+
+    _animateCanvasLineSymbol: function(symbolObject, screenOriginPoint, screenDestinationPoint) {
+      var ctx = this._animationCanvasElement.getContext('2d');
+      // ctx.beginPath();
+      // ctx.moveTo(10, 10);
+      // ctx.bezierCurveTo(10, 800, 750, 800, 750, 800);
+      // ctx.setLineDash([8, 1208]);
+      // ctx.lineDashOffset = -this._offset; // this makes the dot appear to move when the entire top canvas is redrawn
+      // ctx.lineWidth = 8;
+      //
+      // // line color
+      // ctx.stroke();
+
+
+      // ctx.lineCap = symbolObject.lineCap;
+      // ctx.lineWidth = symbolObject.lineWidth;
+      ctx.lineWidth = 8;
+      ctx.setLineDash([8, 408]);
+      ctx.lineDashOffset = -this._offset; // this makes the dot appear to move when the entire top canvas is redrawn
+      // ctx.strokeStyle = symbolObject.strokeStyle;
+      ctx.strokeStyle = 'rgba(255, 94, 224, 0.5)';
+      // ctx.shadowBlur = symbolObject.shadowBlur;
+      // ctx.shadowColor = symbolObject.shadowColor;
+      // ctx.shadowBlur = 2;
+      // ctx.shadowColor = 'rgba(255, 8, 208, 0.8)';
+      ctx.beginPath();
+      ctx.moveTo(screenOriginPoint.x, screenOriginPoint.y);
+      ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
+      ctx.stroke();
+      ctx.closePath();
+    },
+
+    animator: function() {
+      // 1. linear
+      // this._offset += 1;
+
+      // 2. ease out with linear ending: start fast, slow down, and then remain constant (change this._incrementer defaults to 0.1)
+      this._incrementer = this._incrementer < 1 ? this._incrementer + 0.009 : 1;
+      this._offset += (1 / this._incrementer);
+
+      // 3. ease in with linear ending: start slow, speed up, and then remain constant (change this._incrementer defaults to 0.01)
+      // this._incrementer = this._incrementer < 55 ? this._incrementer + 1 : this._incrementer;
+      // this._offset += Math.pow(1.05, this._incrementer);
+
+      if (this._offset > 400) {
+        this._offset = 0;
+        this._incrementer = 0.1;
+      }
+
+      ctx = this._animationCanvasElement.getContext('2d');
+      ctx.clearRect(0, 0, this._animationCanvasElement.width, this._animationCanvasElement.height);
+      this._drawSelectedCanvasPaths(true); // draw it again to give the appearance of a moving dot with a new lineDashOffset
+      this._animationFrameId = window.requestAnimationFrame(lang.hitch(this, 'animator'));
     }
 
   });

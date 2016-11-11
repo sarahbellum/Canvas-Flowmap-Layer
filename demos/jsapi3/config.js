@@ -23,30 +23,6 @@ define([], function() {
         }
       },
 
-      destinationCircleProperties: {
-        type: 'simple',
-        symbol: {
-          globalCompositeOperation: 'destination-over',
-          radius: 2,
-          fillStyle: 'rgba(87, 216, 255, 0.75)',
-          lineWidth: 0.25,
-          strokeStyle: 'rgb(61, 225, 255)',
-          shadowBlur: 0
-        }
-      },
-
-      destinationHighlightCircleProperties: {
-        type: 'simple',
-        symbol: {
-          globalCompositeOperation: 'destination-over',
-          radius: 2,
-          fillStyle: 'rgba(87, 216, 255, 0.75)',
-          lineWidth: 6,
-          strokeStyle: 'rgb(255, 0, 51)',
-          shadowBlur: 0
-        }
-      },
-
       pathProperties: {
         type: 'simple',
         symbol: {
