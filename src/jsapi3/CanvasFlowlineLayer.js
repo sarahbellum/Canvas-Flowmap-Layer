@@ -82,22 +82,35 @@ define([
         type: 'simple',
         symbol: {
           strokeStyle: 'rgba(207, 241, 17, 0.8)',
-          shadowBlur: 1.5,
           lineWidth: 0.5,
+          lineCap: 'round',
           shadowColor: 'rgb(207, 241, 17)',
-          lineCap: 'round'
+          shadowBlur: 1.5
+        }
+      };
+
+      this.animatePathProperties = options.animatePathProperties || {
+        type: 'simple',
+        symbol: {
+          strokeStyle: 'rgba(255, 94, 224, 0.5)',
+          lineWidth: 8,
+          lineCap: 'round',
+          shadowColor: 'rgba(255, 8, 208, 0.8)',
+          shadowBlur: 2
         }
       };
 
       this.pathDisplayMode = options.pathDisplayMode || 'all'; // valid values: 'selection' or 'all'
 
       // PRIVATE properties for internal usage
+
       this._previousPanDelta = {
         x: 0,
         y: 0
       };
       this._listeners = [];
 
+      // animation properties
       this._incrementer = 0.1;
       this._offset = 0;
     },
@@ -499,7 +512,17 @@ define([
       }
 
       // convert geometry to screen coordinates for canvas drawing
-      var screenPoint = this._map.toScreen(graphic.geometry);
+      var geometryJsonClone = lang.clone(graphic.geometry.toJson());
+      var geometry = new Point(geometryJsonClone);
+      var wrapAroundDiff = this._map.geographicExtent.getCenter().getLongitude() - geometry.getLongitude();
+      if (wrapAroundDiff > 180) {
+        geometry.setLongitude(geometry.getLongitude() + (Math.round(wrapAroundDiff / 360) * 360));
+        // geometry.setLongitude(geometry.getLongitude() + 360);
+      } else if (wrapAroundDiff < -180) {
+        geometry.setLongitude(geometry.getLongitude() + (Math.round(wrapAroundDiff / 360) * 360));
+        // geometry.setLongitude(geometry.getLongitude() - 360);
+      }
+      var screenPoint = this._map.toScreen(geometry);
 
       // draw a circle point on the canvas
       this._applyCanvasPointSymbol(symbol, screenPoint);
@@ -534,7 +557,7 @@ define([
 
           if (animate) {
             this._drawNewCanvasPath(
-              this.pathProperties,
+              this.animatePathProperties,
               attributes,
               originXCoordinate, originYCoordinate,
               destinationXCoordinate, destinationYCoordinate,
@@ -570,7 +593,15 @@ define([
       var originPoint = new Point(originXCoordinate, originYCoordinate, spatialReference);
       var destinationPoint = new Point(destinationXCoordinate, destinationYCoordinate, spatialReference);
 
-      // convert geometries to screen coordinates for canvas drawing
+      [originPoint, destinationPoint].forEach(function(geometry) {
+        // convert geometries to screen coordinates for canvas drawing
+        var wrapAroundDiff = this._map.geographicExtent.getCenter().getLongitude() - geometry.getLongitude();
+        if (wrapAroundDiff > 180) {
+          geometry.setLongitude(geometry.getLongitude() + (Math.round(wrapAroundDiff / 360) * 360));
+        } else if (wrapAroundDiff < -180) {
+          geometry.setLongitude(geometry.getLongitude() + (Math.round(wrapAroundDiff / 360) * 360));
+        }
+      }, this);
       var screenOriginPoint = this._map.toScreen(originPoint);
       var screenDestinationPoint = this._map.toScreen(destinationPoint);
 
@@ -598,28 +629,13 @@ define([
 
     _animateCanvasLineSymbol: function(symbolObject, screenOriginPoint, screenDestinationPoint) {
       var ctx = this._animationCanvasElement.getContext('2d');
-      // ctx.beginPath();
-      // ctx.moveTo(10, 10);
-      // ctx.bezierCurveTo(10, 800, 750, 800, 750, 800);
-      // ctx.setLineDash([8, 1208]);
-      // ctx.lineDashOffset = -this._offset; // this makes the dot appear to move when the entire top canvas is redrawn
-      // ctx.lineWidth = 8;
-      //
-      // // line color
-      // ctx.stroke();
-
-
-      // ctx.lineCap = symbolObject.lineCap;
-      // ctx.lineWidth = symbolObject.lineWidth;
-      ctx.lineWidth = 8;
+      ctx.lineCap = symbolObject.lineCap;
+      ctx.lineWidth = symbolObject.lineWidth;
+      ctx.strokeStyle = symbolObject.strokeStyle;
+      ctx.shadowBlur = symbolObject.shadowBlur;
+      ctx.shadowColor = symbolObject.shadowColor;
       ctx.setLineDash([8, 408]);
       ctx.lineDashOffset = -this._offset; // this makes the dot appear to move when the entire top canvas is redrawn
-      // ctx.strokeStyle = symbolObject.strokeStyle;
-      ctx.strokeStyle = 'rgba(255, 94, 224, 0.5)';
-      // ctx.shadowBlur = symbolObject.shadowBlur;
-      // ctx.shadowColor = symbolObject.shadowColor;
-      // ctx.shadowBlur = 2;
-      // ctx.shadowColor = 'rgba(255, 8, 208, 0.8)';
       ctx.beginPath();
       ctx.moveTo(screenOriginPoint.x, screenOriginPoint.y);
       ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
@@ -644,7 +660,7 @@ define([
         this._incrementer = 0.1;
       }
 
-      ctx = this._animationCanvasElement.getContext('2d');
+      var ctx = this._animationCanvasElement.getContext('2d');
       ctx.clearRect(0, 0, this._animationCanvasElement.width, this._animationCanvasElement.height);
       this._drawSelectedCanvasPaths(true); // draw it again to give the appearance of a moving dot with a new lineDashOffset
       this._animationFrameId = window.requestAnimationFrame(lang.hitch(this, 'animator'));
