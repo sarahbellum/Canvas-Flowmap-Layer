@@ -102,6 +102,8 @@ define([
 
       this.pathDisplayMode = options.pathDisplayMode || 'all'; // valid values: 'selection' or 'all'
 
+      this.wrapAroundCanvas = options.hasOwnProperty('wrapAroundCanvas') ? options.wrapAroundCanvas : true; // Boolean
+
       // PRIVATE properties for internal usage
 
       this._previousPanDelta = {
@@ -289,7 +291,7 @@ define([
           width: this._map.width + 'px',
           height: this._map.height + 'px',
           style: 'position: absolute; left: 0px; top: 0px;'
-          // style: 'position: absolute; left: 0px; top: 0px; z-index: 2;'
+            // style: 'position: absolute; left: 0px; top: 0px; z-index: 2;'
         }, 'map_layer0', 'after');
 
         canvasElementBottom = domConstruct.create('canvas', {
@@ -297,7 +299,7 @@ define([
           width: this._map.width + 'px',
           height: this._map.height + 'px',
           style: 'position: absolute; left: 0px; top: 0px;'
-          // style: 'position: absolute; left: 0px; top: 0px; z-index: 1;'
+            // style: 'position: absolute; left: 0px; top: 0px; z-index: 1;'
         }, canvasElementTop, 'after');
       } else {
         canvasElementTop = dom.byId(canvasStageElementId + '_topCanvas');
@@ -511,17 +513,10 @@ define([
         })[0].symbol;
       }
 
+      // ensure that canvas features will be drawn beyond +/-180 longitude
+      var geometry = this._wrapAroundCanvasPointGeometry(graphic.geometry);
+
       // convert geometry to screen coordinates for canvas drawing
-      var geometryJsonClone = lang.clone(graphic.geometry.toJson());
-      var geometry = new Point(geometryJsonClone);
-      var wrapAroundDiff = this._map.geographicExtent.getCenter().getLongitude() - geometry.getLongitude();
-      if (wrapAroundDiff > 180) {
-        geometry.setLongitude(geometry.getLongitude() + (Math.round(wrapAroundDiff / 360) * 360));
-        // geometry.setLongitude(geometry.getLongitude() + 360);
-      } else if (wrapAroundDiff < -180) {
-        geometry.setLongitude(geometry.getLongitude() + (Math.round(wrapAroundDiff / 360) * 360));
-        // geometry.setLongitude(geometry.getLongitude() - 360);
-      }
       var screenPoint = this._map.toScreen(geometry);
 
       // draw a circle point on the canvas
@@ -590,18 +585,11 @@ define([
       }
 
       // origin and destination points for drawing curved lines
-      var originPoint = new Point(originXCoordinate, originYCoordinate, spatialReference);
-      var destinationPoint = new Point(destinationXCoordinate, destinationYCoordinate, spatialReference);
+      // ensure that canvas features will be drawn beyond +/-180 longitude
+      var originPoint = this._wrapAroundCanvasPointGeometry(new Point(originXCoordinate, originYCoordinate, spatialReference));
+      var destinationPoint = this._wrapAroundCanvasPointGeometry(new Point(destinationXCoordinate, destinationYCoordinate, spatialReference));
 
-      [originPoint, destinationPoint].forEach(function(geometry) {
-        // convert geometries to screen coordinates for canvas drawing
-        var wrapAroundDiff = this._map.geographicExtent.getCenter().getLongitude() - geometry.getLongitude();
-        if (wrapAroundDiff > 180) {
-          geometry.setLongitude(geometry.getLongitude() + (Math.round(wrapAroundDiff / 360) * 360));
-        } else if (wrapAroundDiff < -180) {
-          geometry.setLongitude(geometry.getLongitude() + (Math.round(wrapAroundDiff / 360) * 360));
-        }
-      }, this);
+      // convert geometry to screen coordinates for canvas drawing
       var screenOriginPoint = this._map.toScreen(originPoint);
       var screenDestinationPoint = this._map.toScreen(destinationPoint);
 
@@ -625,6 +613,24 @@ define([
       ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
       ctx.stroke();
       ctx.closePath();
+    },
+
+    _wrapAroundCanvasPointGeometry: function(geometry) {
+      if (this.wrapAroundCanvas) {
+        var geometryJsonClone = lang.clone(geometry.toJson());
+        var wrappedGeometry = new Point(geometryJsonClone);
+        var geometryLongitude = wrappedGeometry.getLongitude();
+
+        var mapCenterLongitude = this._map.geographicExtent.getCenter().getLongitude();
+
+        var wrapAroundDiff = mapCenterLongitude - geometryLongitude;
+        if (wrapAroundDiff < -180 || wrapAroundDiff > 180) {
+          wrappedGeometry.setLongitude(geometryLongitude + (Math.round(wrapAroundDiff/ 360) * 360));
+        }
+        return wrappedGeometry;
+      } else {
+        return geometry;
+      }
     },
 
     _animateCanvasLineSymbol: function(symbolObject, screenOriginPoint, screenDestinationPoint) {

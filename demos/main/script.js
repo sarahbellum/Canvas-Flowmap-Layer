@@ -25,7 +25,8 @@ require([
       //  - required
       originAndDestinationFieldIds: config.cityToCityLayer.originAndDestinationFieldIds,
       //  - optional
-      pathDisplayMode: 'selection' // 'selection' or 'all'
+      pathDisplayMode: 'selection', // 'selection' or 'all'
+      wrapAroundCanvas: true // true or false
     });
 
     map.addLayer(cityToCityLayer);
