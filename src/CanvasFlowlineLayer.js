@@ -1,7 +1,6 @@
 define([
   'dojo/_base/declare',
   'dojo/_base/lang',
-  'dojo/dom',
   'dojo/dom-construct',
   'dojo/on',
 
@@ -12,7 +11,7 @@ define([
   'esri/SpatialReference',
   'esri/symbols/SimpleMarkerSymbol'
 ], function(
-  declare, lang, dom, domConstruct, on,
+  declare, lang, domConstruct, on,
   Color, Point, Graphic, GraphicsLayer, SpatialReference, SimpleMarkerSymbol
 ) {
   return declare([GraphicsLayer], {
@@ -276,34 +275,30 @@ define([
       var canvasStageElementId = this.id;
 
       // look up if it is already in the DOM
-      var canvasStageElement = dom.byId(canvasStageElementId);
+      var canvasStageElement = document.querySelector('#' + canvasStageElementId);
 
       var canvasElementTop, canvasElementBottom;
       // if not in the DOM, create it only once
       if (!canvasStageElement) {
-        // canvasStageElement = domConstruct.create('div', {
-        //   id: canvasStageElementId,
-        //   style: 'position: relative; left: 0px; top: 0px; width: 100%; height: 100%;'
-        // }, 'map_layer0', 'after'); // TODO: find a more flexible way to add this to the right DOM position
+        var _mapImageLayerDivs = document.querySelectorAll('div[id^=\'map_layer\']');
+        var _lastMapImageLayerDiv = _mapImageLayerDivs[_mapImageLayerDivs.length - 1];
 
         canvasElementTop = domConstruct.create('canvas', {
           id: canvasStageElementId + '_topCanvas',
           width: this._map.width + 'px',
           height: this._map.height + 'px',
           style: 'position: absolute; left: 0px; top: 0px;'
-            // style: 'position: absolute; left: 0px; top: 0px; z-index: 2;'
-        }, 'map_layer0', 'after');
+        }, _lastMapImageLayerDiv, 'after');
 
         canvasElementBottom = domConstruct.create('canvas', {
           id: canvasStageElementId + '_bottomCanvas',
           width: this._map.width + 'px',
           height: this._map.height + 'px',
           style: 'position: absolute; left: 0px; top: 0px;'
-            // style: 'position: absolute; left: 0px; top: 0px; z-index: 1;'
         }, canvasElementTop, 'after');
       } else {
-        canvasElementTop = dom.byId(canvasStageElementId + '_topCanvas');
-        canvasElementBottom = dom.byId(canvasStageElementId + '_bottomCanvas');
+        canvasElementTop = document.querySelector('#' + canvasStageElementId + '_topCanvas');
+        canvasElementBottom = document.querySelector('#' + canvasStageElementId + '_bottomCanvas');
       }
 
       return {
