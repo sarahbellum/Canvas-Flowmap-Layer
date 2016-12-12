@@ -23,6 +23,9 @@
 <body class="calcite">
   <div id="map"></div>
 
+  <!-- load 3rd-party CSV parsing libary  -->
+  <script src="//unpkg.com/papaparse/papaparse.min.js"></script>
+  <!-- set Dojo configuration options -->
   <script>
     var dojoConfig = {
       async: true,
@@ -36,7 +39,9 @@
       }]
     };
   </script>
+  <!-- load Esri JSAPI -->
   <script src="//js.arcgis.com/3.18compact/"></script>
+  <!-- load this app's code -->
   <script src="script.js"></script>
 </body>
 

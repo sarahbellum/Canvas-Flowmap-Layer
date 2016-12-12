@@ -32,33 +32,8 @@ define([], function() {
           shadowColor: 'rgb(207, 241, 17)',
           lineCap: 'round'
         }
-      },
+      }
 
-      csvAttributeDefinitions: [{
-        name: 's_city_id',
-        type: 'Number'
-      }, {
-        name: 's_city',
-        type: 'String'
-      }, {
-        name: 's_lon',
-        type: 'Number'
-      }, {
-        name: 's_lat',
-        type: 'Number'
-      }, {
-        name: 'e_city_id',
-        type: 'Number'
-      }, {
-        name: 'e_City',
-        type: 'String'
-      }, {
-        name: 'e_lon',
-        type: 'Number'
-      }, {
-        name: 'e_lat',
-        type: 'Number'
-      }]
     }
   };
 });

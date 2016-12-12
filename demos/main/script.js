@@ -1,18 +1,13 @@
 require([
-  'Canvas-Flowline-Layer/jsapi3/CanvasFlowlineLayer',
-
-  'esri/layers/CSVLayer',
+  'Canvas-Flowline-Layer/CanvasFlowlineLayer',
+  'esri/graphic',
   'esri/map',
-
   'local-resources/config',
-
   'dojo/domReady!'
 ], function(
   CanvasFlowlineLayer,
-
-  CSVLayer,
+  Graphic,
   Map,
-
   config
 ) {
   var map = new Map('map', {
@@ -27,36 +22,37 @@ require([
       id: 'cityToCityLayer',
       visible: true,
       // CanvasFlowlineLayer custom constructor properties
-      // required
+      //  - required
       originAndDestinationFieldIds: config.cityToCityLayer.originAndDestinationFieldIds,
-      // optional
-      // pathProperties: config.cityToCityLayer.pathProperties,
+      //  - optional
       pathDisplayMode: 'selection' // 'selection' or 'all'
     });
 
     map.addLayer(cityToCityLayer);
 
-    // NOTE: the CSVLayer is only used now to fetch and parse the CSV data
-    // we could have also used a library like D3js to load the CSV data
-    var csvData = new CSVLayer('../../csv/Flowline_Cities_one_to_many.csv', {
-      fields: config.cityToCityLayer.csvAttributeDefinitions,
-      outFields: config.cityToCityLayer.csvAttributeDefinitions.map(function(attrDef) {
-        return attrDef.name;
-      }),
-      latitudeFieldName: 's_lat',
-      longitudeFieldName: 's_lon'
-    });
-
-    map.addLayer(csvData);
-
-    csvData.on('update-end', function() {
-      if (csvData.graphics.length) {
-        // remove the temporary CSVLayer from the map,
-        // since we're done parsing the CSV data into Esri graphics
-        map.removeLayer(csvData);
+    // here we use Papa Parse to load and read the CSV data
+    // we could have also used another library like D3js to do the same
+    Papa.parse('../../csv/Flowline_Cities_one_to_many.csv', {
+      download: true,
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        var csvGraphics = results.data.map(function(datum) {
+          return new Graphic({
+            geometry: {
+              x: datum.s_lon,
+              y: datum.s_lat,
+              spatialReference: {
+                wkid: 4326
+              }
+            },
+            attributes: datum
+          });
+        });
 
         // add all graphics to the canvas flowline layer
-        cityToCityLayer.addGraphics(csvData.graphics);
+        cityToCityLayer.addGraphics(csvGraphics);
       }
     });
 
