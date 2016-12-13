@@ -38,7 +38,7 @@ define([], function() {
   };
 });
 
-// EXAMPLE OF SYMBOL PROPERTIES WITH CATEGORICAL UNQIUE VALUES:
+// EXAMPLE OF POINT SYMBOL PROPERTIES WITH CATEGORICAL/UNIQUE VALUES:
 
 // destinationCircleProperties: {
 //   type: 'uniqueValue',
@@ -62,6 +62,43 @@ define([], function() {
 //       lineWidth: 0.5,
 //       strokeStyle: 'rgb(181, 131, 217)',
 //       shadowBlur: 0
+//     }
+//   }]
+// }
+
+// EXAMPLE OF LINE SYMBOL PROPERTIES WITH CLASS BREAK VALUES:
+
+// pathProperties: {
+//   type: 'classBreaks',
+//   field: 's_Volume',
+//   defaultSymbol: {
+//     strokeStyle: 'rgba(237, 248, 177, 1)',
+//     lineWidth: 0.5,
+//     lineCap: 'round'
+//   },
+//   classBreakInfos: [{
+//     classMinValue: 0,
+//     classMaxValue: 999999,
+//     symbol: {
+//       strokeStyle: 'rgba(237, 248, 177, 1)',
+//       lineWidth: 0.5,
+//       lineCap: 'round'
+//     }
+//   }, {
+//     classMinValue: 999999,
+//     classMaxValue: 4999999,
+//     symbol: {
+//       strokeStyle: 'rgba(127, 205, 187, 1)',
+//       lineWidth: 1.5,
+//       lineCap: 'round'
+//     }
+//   }, {
+//     classMinValue: 5000000,
+//     classMaxValue: 10000000,
+//     symbol: {
+//       strokeStyle: 'rgba(44, 127, 184, 1)',
+//       lineWidth: 3,
+//       lineCap: 'round'
 //     }
 //   }]
 // }

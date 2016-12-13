@@ -320,7 +320,7 @@ define([
           width: this._map.width + 'px',
           height: this._map.height + 'px',
           style: 'position: absolute; left: 0px; top: 0px;'
-        }, canvasElementTop, 'after');
+        }, canvasElementTop, 'before');
       } else {
         canvasElementTop = document.querySelector('#' + canvasStageElementId + '_topCanvas');
         canvasElementBottom = document.querySelector('#' + canvasStageElementId + '_bottomCanvas');
@@ -599,12 +599,26 @@ define([
     _drawNewCanvasPath: function(canvasPathProperties, graphicAttributes, originXCoordinate, originYCoordinate, destinationXCoordinate, destinationYCoordinate, spatialReference, animate) {
       // get the canvas symbol properties
       var symbol;
+      var filteredSymbols;
       if (canvasPathProperties.type === 'simple') {
         symbol = canvasPathProperties.symbol;
       } else if (canvasPathProperties.type === 'uniqueValue') {
-        symbol = canvasPathProperties.uniqueValueInfos.filter(function(info) {
+        filteredSymbols = canvasPathProperties.uniqueValueInfos.filter(function(info) {
           return info.value === graphicAttributes[canvasPathProperties.field];
-        })[0].symbol;
+        })
+        symbol = filteredSymbols[0].symbol;
+      } else if (canvasPathProperties.type === 'classBreaks') {
+        filteredSymbols = canvasPathProperties.classBreakInfos.filter(function(info) {
+          return (
+            info.classMinValue <= graphicAttributes[canvasPathProperties.field] &&
+            info.classMaxValue >= graphicAttributes[canvasPathProperties.field]
+          );
+        });
+        if (filteredSymbols.length) {
+          symbol = filteredSymbols[0].symbol;
+        } else {
+          symbol = canvasPathProperties.defaultSymbol;
+        }
       }
 
       // origin and destination points for drawing curved lines

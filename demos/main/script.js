@@ -25,6 +25,7 @@ require([
       //  - required
       originAndDestinationFieldIds: config.cityToCityLayer.originAndDestinationFieldIds,
       //  - optional
+      pathProperties: config.cityToCityLayer.pathProperties,
       pathDisplayMode: 'selection', // 'selection' or 'all'
       wrapAroundCanvas: true,
       animationStarted: true,
