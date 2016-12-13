@@ -93,6 +93,7 @@ define([
         symbol: {
           strokeStyle: 'rgba(255, 94, 224, 0.5)',
           lineWidth: 8,
+          lineDashOffsetSize: 8, // custom property used with animation sprite sizes
           lineCap: 'round',
           shadowColor: 'rgba(255, 8, 208, 0.8)',
           shadowBlur: 2
@@ -103,17 +104,30 @@ define([
 
       this.wrapAroundCanvas = options.hasOwnProperty('wrapAroundCanvas') ? options.wrapAroundCanvas : true; // Boolean
 
+      this.animationStarted = options.hasOwnProperty('animationStarted') ? options.animationStarted : false; // Boolean
+
+      this.animationStyle = options.animationStyle || 'ease-out'; // valid values: 'linear', 'ease-out', or 'ease-in'
+
       // PRIVATE properties for internal usage
 
       this._previousPanDelta = {
         x: 0,
         y: 0
       };
+
       this._listeners = [];
 
       // animation properties
-      this._incrementer = 0.1;
       this._offset = 0;
+      this._resetOffset = 400;
+      this._lineDashOffsetSize = this.animatePathProperties.symbol.lineDashOffsetSize;
+      if (this.animationStyle === 'ease-out') {
+        this._incrementer = 0.1;
+      } else if (this.animationStyle === 'ease-in') {
+        this._incrementer = 0.01;
+      } else {
+        // TODO: let developers define their own default this._incrementer value
+      }
     },
 
     /*
@@ -200,6 +214,17 @@ define([
         }
       }, this);
 
+      this._redrawCanvas();
+    },
+
+    playAnimation: function(animationStyle) {
+      this.animationStyle = animationStyle || 'ease-out';
+      this.animationStarted = true;
+      this._redrawCanvas();
+    },
+
+    stopAnimation: function() {
+      this.animationStarted = false;
       this._redrawCanvas();
     },
 
@@ -341,11 +366,14 @@ define([
         this._drawAllCanvasPoints();
         // loop over each of the "selected" graphics and re-draw the canvas paths
         this._drawSelectedCanvasPaths(false);
-
+        // clear/reset previous animation frames
         if (this._animationFrameId) {
           window.cancelAnimationFrame(this._animationFrameId);
         }
-        this.animator();
+        if (this.animationStarted) {
+          // start animation loop
+          this._animator();
+        }
       }
     },
 
@@ -610,6 +638,80 @@ define([
       ctx.closePath();
     },
 
+    _animateCanvasLineSymbol: function(symbolObject, screenOriginPoint, screenDestinationPoint) {
+      var ctx = this._animationCanvasElement.getContext('2d');
+      ctx.lineCap = symbolObject.lineCap;
+      ctx.lineWidth = symbolObject.lineWidth;
+      ctx.strokeStyle = symbolObject.strokeStyle;
+      ctx.shadowBlur = symbolObject.shadowBlur;
+      ctx.shadowColor = symbolObject.shadowColor;
+      ctx.setLineDash([this._lineDashOffsetSize, this._lineDashOffsetSize + this._resetOffset]);
+      ctx.lineDashOffset = -this._offset; // this makes the dot appear to move when the entire top canvas is redrawn
+      ctx.beginPath();
+      ctx.moveTo(screenOriginPoint.x, screenOriginPoint.y);
+      ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
+      ctx.stroke();
+      ctx.closePath();
+    },
+
+    _animator: function() {
+      this._applyAnimator();
+
+      var ctx = this._animationCanvasElement.getContext('2d');
+      ctx.clearRect(0, 0, this._animationCanvasElement.width, this._animationCanvasElement.height);
+      this._drawSelectedCanvasPaths(true); // draw it again to give the appearance of a moving dot with a new lineDashOffset
+      this._animationFrameId = window.requestAnimationFrame(lang.hitch(this, '_animator'));
+    },
+
+    _applyAnimator: function() {
+      if (this.animationStyle === 'linear') {
+        this._linearAnimator();
+      } else if (this.animationStyle === 'ease-out') {
+        this._easeOutAnimator();
+      } else if (this.animationStyle === 'ease-in') {
+        this._easeInAnimator();
+      } else {
+        // TODO: let developers define their own animator function
+        this._customAnimator();
+      }
+    },
+
+    _linearAnimator: function() {
+      // linear: constant rate line animation
+
+      this._offset += 1;
+
+      if (this._offset > this._resetOffset) {
+        this._offset = 0;
+      }
+    },
+
+    _easeOutAnimator: function() {
+      // ease out with linear ending: start fast, slow down, and then remain constant
+      // this._incrementer defaults to 0.1
+
+      this._incrementer = this._incrementer < 1 ? this._incrementer + 0.009 : 1;
+      this._offset += (1 / this._incrementer);
+
+      if (this._offset > this._resetOffset) {
+        this._offset = 0;
+        this._incrementer = 0.1;
+      }
+    },
+
+    _easeInAnimator: function() {
+      // ease in with linear ending: start slow, speed up, and then remain constant
+      // this._incrementer defaults to 0.01
+
+      this._incrementer = this._incrementer < 55 ? this._incrementer + 1 : this._incrementer;
+      this._offset += Math.pow(1.05, this._incrementer);
+
+      if (this._offset > this._resetOffset) {
+        this._offset = 0;
+        this._incrementer = 0.01;
+      }
+    },
+
     _wrapAroundCanvasPointGeometry: function(geometry) {
       if (this.wrapAroundCanvas) {
         var geometryJsonClone = lang.clone(geometry.toJson());
@@ -620,51 +722,12 @@ define([
 
         var wrapAroundDiff = mapCenterLongitude - geometryLongitude;
         if (wrapAroundDiff < -180 || wrapAroundDiff > 180) {
-          wrappedGeometry.setLongitude(geometryLongitude + (Math.round(wrapAroundDiff/ 360) * 360));
+          wrappedGeometry.setLongitude(geometryLongitude + (Math.round(wrapAroundDiff / 360) * 360));
         }
         return wrappedGeometry;
       } else {
         return geometry;
       }
-    },
-
-    _animateCanvasLineSymbol: function(symbolObject, screenOriginPoint, screenDestinationPoint) {
-      var ctx = this._animationCanvasElement.getContext('2d');
-      ctx.lineCap = symbolObject.lineCap;
-      ctx.lineWidth = symbolObject.lineWidth;
-      ctx.strokeStyle = symbolObject.strokeStyle;
-      ctx.shadowBlur = symbolObject.shadowBlur;
-      ctx.shadowColor = symbolObject.shadowColor;
-      ctx.setLineDash([8, 408]);
-      ctx.lineDashOffset = -this._offset; // this makes the dot appear to move when the entire top canvas is redrawn
-      ctx.beginPath();
-      ctx.moveTo(screenOriginPoint.x, screenOriginPoint.y);
-      ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
-      ctx.stroke();
-      ctx.closePath();
-    },
-
-    animator: function() {
-      // 1. linear
-      // this._offset += 1;
-
-      // 2. ease out with linear ending: start fast, slow down, and then remain constant (change this._incrementer defaults to 0.1)
-      this._incrementer = this._incrementer < 1 ? this._incrementer + 0.009 : 1;
-      this._offset += (1 / this._incrementer);
-
-      // 3. ease in with linear ending: start slow, speed up, and then remain constant (change this._incrementer defaults to 0.01)
-      // this._incrementer = this._incrementer < 55 ? this._incrementer + 1 : this._incrementer;
-      // this._offset += Math.pow(1.05, this._incrementer);
-
-      if (this._offset > 400) {
-        this._offset = 0;
-        this._incrementer = 0.1;
-      }
-
-      var ctx = this._animationCanvasElement.getContext('2d');
-      ctx.clearRect(0, 0, this._animationCanvasElement.width, this._animationCanvasElement.height);
-      this._drawSelectedCanvasPaths(true); // draw it again to give the appearance of a moving dot with a new lineDashOffset
-      this._animationFrameId = window.requestAnimationFrame(lang.hitch(this, 'animator'));
     }
 
   });
