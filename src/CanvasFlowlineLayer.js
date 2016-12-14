@@ -91,11 +91,11 @@ define([
       this.animatePathProperties = options.animatePathProperties || {
         type: 'simple',
         symbol: {
-          strokeStyle: 'rgba(255, 94, 224, 0.5)',
-          lineWidth: 8,
-          lineDashOffsetSize: 8, // custom property used with animation sprite sizes
+          strokeStyle: 'rgb(255, 255, 92)',
+          lineWidth: 1,
+          lineDashOffsetSize: 4, // custom property used with animation sprite sizes
           lineCap: 'round',
-          shadowColor: 'rgba(255, 8, 208, 0.8)',
+          shadowColor: 'rgb(255, 255, 92)',
           shadowBlur: 2
         }
       };
@@ -119,12 +119,12 @@ define([
 
       // animation properties
       this._offset = 0;
-      this._resetOffset = 400;
+      this._resetOffset = 200;
       this._lineDashOffsetSize = this.animatePathProperties.symbol.lineDashOffsetSize;
       if (this.animationStyle === 'ease-out') {
-        this._incrementer = 0.1;
+        this._incrementer = 0.9;
       } else if (this.animationStyle === 'ease-in') {
-        this._incrementer = 0.01;
+        this._incrementer = 0.9;
       } else {
         // TODO: let developers define their own default this._incrementer value
       }
@@ -705,11 +705,11 @@ define([
       // this._incrementer defaults to 0.1
 
       this._incrementer = this._incrementer < 1 ? this._incrementer + 0.009 : 1;
-      this._offset += (1 / this._incrementer);
+      this._offset += (0.9 / this._incrementer);
 
       if (this._offset > this._resetOffset) {
         this._offset = 0;
-        this._incrementer = 0.1;
+        this._incrementer = 0.2;
       }
     },
 
@@ -722,7 +722,7 @@ define([
 
       if (this._offset > this._resetOffset) {
         this._offset = 0;
-        this._incrementer = 0.01;
+        this._incrementer = 0.1;
       }
     },
 
