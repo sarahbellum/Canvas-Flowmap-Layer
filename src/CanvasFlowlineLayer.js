@@ -121,10 +121,12 @@ define([
       this._offset = 0;
       this._resetOffset = 200;
       this._lineDashOffsetSize = this.animatePathProperties.symbol.lineDashOffsetSize;
+      this._defaultEaseOutIncrementer = 0.2;
+      this._defaultEaseInIncrementer = 0.1;
       if (this.animationStyle === 'ease-out') {
-        this._incrementer = 0.9;
+        this._incrementer = this._defaultEaseOutIncrementer;
       } else if (this.animationStyle === 'ease-in') {
-        this._incrementer = 0.9;
+        this._incrementer = this._defaultEaseInIncrementer;
       } else {
         // TODO: let developers define their own default this._incrementer value
       }
@@ -702,27 +704,25 @@ define([
 
     _easeOutAnimator: function() {
       // ease out with linear ending: start fast, slow down, and then remain constant
-      // this._incrementer defaults to 0.1
 
       this._incrementer = this._incrementer < 1 ? this._incrementer + 0.009 : 1;
       this._offset += (0.9 / this._incrementer);
 
       if (this._offset > this._resetOffset) {
         this._offset = 0;
-        this._incrementer = 0.2;
+        this._incrementer = this._defaultEaseOutIncrementer;
       }
     },
 
     _easeInAnimator: function() {
       // ease in with linear ending: start slow, speed up, and then remain constant
-      // this._incrementer defaults to 0.01
 
       this._incrementer = this._incrementer < 55 ? this._incrementer + 1 : this._incrementer;
       this._offset += Math.pow(1.05, this._incrementer);
 
       if (this._offset > this._resetOffset) {
         this._offset = 0;
-        this._incrementer = 0.1;
+        this._incrementer = this._defaultEaseInIncrementer;
       }
     },
 
