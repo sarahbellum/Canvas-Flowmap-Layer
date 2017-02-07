@@ -197,6 +197,30 @@ define([
       this._applyGraphicsSelection(selectionGraphics, selectionMode, '_isSelectedForPathDisplay');
     },
 
+    selectGraphicsForPathDisplayById: function(uniqueOriginOrDestinationIdField, idValue, originBoolean, selectionMode) {
+      if (
+        uniqueOriginOrDestinationIdField !== this.originAndDestinationFieldIds.originUniqueIdField &&
+        uniqueOriginOrDestinationIdField !== this.originAndDestinationFieldIds.destinationUniqueIdField
+      ) {
+        console.error('Invalid unique id field supplied for origin or destination. It must be one of these: ' +
+          this.originAndDestinationFieldIds.originUniqueIdField + ', ' + this.originAndDestinationFieldIds.destinationUniqueIdField);
+        return;
+      }
+
+      var existingOriginOrDestinationGraphic = this.graphics.filter(function(graphic) {
+        return graphic.attributes._isOrigin === originBoolean &&
+          graphic.attributes[uniqueOriginOrDestinationIdField] === idValue;
+      })[0];
+
+      var odInfo = this._getSharedOriginOrDestinationGraphics(existingOriginOrDestinationGraphic);
+
+      if (odInfo.isOriginGraphic) {
+        this.selectGraphicsForPathDisplay(odInfo.sharedOriginGraphics, selectionMode);
+      } else {
+        this.selectGraphicsForPathDisplay(odInfo.sharedDestinationGraphics, selectionMode);
+      }
+    },
+
     selectGraphicsForHighlight: function(selectionGraphics, selectionMode) {
       this._applyGraphicsSelection(selectionGraphics, selectionMode, '_isSelectedForHighlight');
     },
@@ -220,7 +244,7 @@ define([
     },
 
     playAnimation: function(animationStyle) {
-      this.animationStyle = animationStyle || 'ease-out';
+      this.animationStyle = animationStyle || this.animationStyle;
       this.animationStarted = true;
       this._redrawCanvas();
     },
@@ -259,31 +283,13 @@ define([
       // when map is resized in the browser
       this._listeners.push(on.pausable(this._map, 'resize', lang.hitch(this, '_resizeCanvas')));
 
-      // when user interacts with a graphic by click, mouse-over, or mouse-out
+      // when user interacts with a graphic by click or mouse-over,
+      // provide additional event properties
       this._listeners.push(on.pausable(this, 'click,mouse-over', lang.hitch(this, function(evt) {
-        var isOriginGraphic = evt.isOriginGraphic = evt.graphic.attributes._isOrigin;
-        evt.sharedOriginGraphics = [];
-        evt.sharedDestinationGraphics = [];
-
-        if (isOriginGraphic) {
-          // for an ORIGIN point that was interacted with,
-          // make an array of all other ORIGIN graphics with the same ORIGIN ID field
-          var originUniqueIdField = this.originAndDestinationFieldIds.originUniqueIdField;
-          var evtGraphicOriginId = evt.graphic.attributes[originUniqueIdField];
-          evt.sharedOriginGraphics = this.graphics.filter(function(graphic) {
-            return graphic.attributes._isOrigin &&
-              graphic.attributes[originUniqueIdField] === evtGraphicOriginId;
-          });
-        } else {
-          // for a DESTINATION point that was interacted with,
-          // make an array of all other ORIGIN graphics with the same DESTINATION ID field
-          var destinationUniqueIdField = this.originAndDestinationFieldIds.destinationUniqueIdField;
-          var evtGraphicDestinationId = evt.graphic.attributes[destinationUniqueIdField];
-          evt.sharedDestinationGraphics = this.graphics.filter(function(graphic) {
-            return graphic.attributes._isOrigin &&
-              graphic.attributes[destinationUniqueIdField] === evtGraphicDestinationId;
-          });
-        }
+        var odInfo = this._getSharedOriginOrDestinationGraphics(evt.graphic);
+        evt.isOriginGraphic = odInfo.isOriginGraphic;
+        evt.sharedOriginGraphics = odInfo.sharedOriginGraphics;
+        evt.sharedDestinationGraphics = odInfo.sharedDestinationGraphics;
       })));
 
       // pause or resume the pausable listeners depending on initial layer visibility
@@ -406,6 +412,38 @@ define([
 
       this._animationCanvasElement.width = this._map.width;
       this._animationCanvasElement.height = this._map.height;
+    },
+
+    _getSharedOriginOrDestinationGraphics: function(testGraphic) {
+      var isOriginGraphic = testGraphic.attributes._isOrigin;
+      var sharedOriginGraphics = [];
+      var sharedDestinationGraphics = [];
+
+      if (isOriginGraphic) {
+        // for an ORIGIN point that was interacted with,
+        // make an array of all other ORIGIN graphics with the same ORIGIN ID field
+        var originUniqueIdField = this.originAndDestinationFieldIds.originUniqueIdField;
+        var testGraphicOriginId = testGraphic.attributes[originUniqueIdField];
+        sharedOriginGraphics = this.graphics.filter(function(graphic) {
+          return graphic.attributes._isOrigin &&
+            graphic.attributes[originUniqueIdField] === testGraphicOriginId;
+        });
+      } else {
+        // for a DESTINATION point that was interacted with,
+        // make an array of all other ORIGIN graphics with the same DESTINATION ID field
+        var destinationUniqueIdField = this.originAndDestinationFieldIds.destinationUniqueIdField;
+        var testGraphicDestinationId = testGraphic.attributes[destinationUniqueIdField];
+        sharedDestinationGraphics = this.graphics.filter(function(graphic) {
+          return graphic.attributes._isOrigin &&
+            graphic.attributes[destinationUniqueIdField] === testGraphicDestinationId;
+        });
+      }
+
+      return {
+        isOriginGraphic: isOriginGraphic, // Boolean
+        sharedOriginGraphics: sharedOriginGraphics, // Array of graphics
+        sharedDestinationGraphics: sharedDestinationGraphics // Array of graphics
+      };
     },
 
     _applyGraphicsSelection: function(selectionGraphics, selectionMode, selectionAttributeName) {
@@ -607,7 +645,7 @@ define([
       } else if (canvasPathProperties.type === 'uniqueValue') {
         filteredSymbols = canvasPathProperties.uniqueValueInfos.filter(function(info) {
           return info.value === graphicAttributes[canvasPathProperties.field];
-        })
+        });
         symbol = filteredSymbols[0].symbol;
       } else if (canvasPathProperties.type === 'classBreaks') {
         filteredSymbols = canvasPathProperties.classBreakInfos.filter(function(info) {
@@ -688,12 +726,12 @@ define([
         this._easeInAnimator();
       } else {
         // TODO: let developers define their own animator function
-        this._customAnimator();
+        // this._customAnimator();
       }
     },
 
     _linearAnimator: function() {
-      // linear: constant rate line animation
+      // linear: constant rate animation
 
       this._offset += 1;
 
