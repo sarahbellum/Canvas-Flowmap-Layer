@@ -34,9 +34,9 @@ define([
         symbol: {
           globalCompositeOperation: 'destination-over',
           radius: 5,
-          fillStyle: 'rgba(0, 255, 29, 0.75)',
+          fillStyle: 'rgba(195, 255, 62, 0.60)',
           lineWidth: 1,
-          strokeStyle: 'rgb(0, 255, 29)',
+          strokeStyle: 'rgb(195, 255, 62)',
           shadowBlur: 0
         }
       };
@@ -45,8 +45,8 @@ define([
         type: 'simple',
         symbol: {
           globalCompositeOperation: 'destination-over',
-          radius: 5.5,
-          fillStyle: 'rgba(0, 198, 0, 0.78)',
+          radius: 6,
+          fillStyle: 'rgba(195, 255, 62, 0.60)',
           lineWidth: 4,
           strokeStyle: 'rgb(207, 0, 51)',
           shadowBlur: 0
@@ -57,10 +57,10 @@ define([
         type: 'simple',
         symbol: {
           globalCompositeOperation: 'destination-over',
-          radius: 2,
-          fillStyle: 'rgba(87, 216, 255, 0.75)',
+          radius: 2.5,
+          fillStyle: 'rgba(17, 142, 170, 0.7)',
           lineWidth: 0.25,
-          strokeStyle: 'rgb(61, 225, 255)',
+          strokeStyle: 'rgb(17, 142, 170)',
           shadowBlur: 0
         }
       };
@@ -70,7 +70,7 @@ define([
         symbol: {
           globalCompositeOperation: 'destination-over',
           radius: 2,
-          fillStyle: 'rgba(87, 216, 255, 0.75)',
+          fillStyle: 'rgba(17, 142, 170, 0.7)',
           lineWidth: 6,
           strokeStyle: 'rgb(255, 0, 51)',
           shadowBlur: 0
@@ -80,10 +80,10 @@ define([
       this.pathProperties = options.pathProperties || {
         type: 'simple',
         symbol: {
-          strokeStyle: 'rgba(207, 241, 17, 0.8)',
-          lineWidth: 0.5,
+          strokeStyle: 'rgba(255, 0, 51, 0.8)',
+          lineWidth: 0.75,
           lineCap: 'round',
-          shadowColor: 'rgb(207, 241, 17)',
+          shadowColor: 'rgb(255, 0, 51)',
           shadowBlur: 1.5
         }
       };
@@ -91,11 +91,11 @@ define([
       this.animatePathProperties = options.animatePathProperties || {
         type: 'simple',
         symbol: {
-          strokeStyle: 'rgb(255, 255, 92)',
-          lineWidth: 1,
+          strokeStyle: 'rgb(255, 46, 88)',
+          lineWidth: 1.25,
           lineDashOffsetSize: 4, // custom property used with animation sprite sizes
           lineCap: 'round',
-          shadowColor: 'rgb(255, 255, 92)',
+          shadowColor: 'rgb(255, 0, 51)',
           shadowBlur: 2
         }
       };

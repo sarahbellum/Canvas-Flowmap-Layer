@@ -26,10 +26,10 @@ define([], function() {
       pathProperties: {
         type: 'simple',
         symbol: {
-          strokeStyle: 'rgba(207, 241, 17, 0.8)',
+          strokeStyle: 'rgba(255, 0, 51, 0.8)',
           shadowBlur: 1.5,
           lineWidth: 0.5,
-          shadowColor: 'rgb(207, 241, 17)',
+          shadowColor: 'rgb(255, 0, 51)',
           lineCap: 'round'
         }
       }
@@ -72,7 +72,7 @@ define([], function() {
 //   type: 'classBreaks',
 //   field: 's_Volume',
 //   defaultSymbol: {
-//     strokeStyle: 'rgba(237, 248, 177, 1)',
+//     strokeStyle: 'rgba(130, 0, 0, 1)',
 //     lineWidth: 0.5,
 //     lineCap: 'round'
 //   },
@@ -80,7 +80,7 @@ define([], function() {
 //     classMinValue: 0,
 //     classMaxValue: 999999,
 //     symbol: {
-//       strokeStyle: 'rgba(237, 248, 177, 1)',
+//       strokeStyle: 'rgba(130, 0, 0, 1)',
 //       lineWidth: 0.5,
 //       lineCap: 'round'
 //     }
@@ -88,7 +88,7 @@ define([], function() {
 //     classMinValue: 999999,
 //     classMaxValue: 4999999,
 //     symbol: {
-//       strokeStyle: 'rgba(127, 205, 187, 1)',
+//       strokeStyle: 'rgba(184, 0, 0, 1)',
 //       lineWidth: 1.5,
 //       lineCap: 'round'
 //     }
@@ -96,7 +96,7 @@ define([], function() {
 //     classMinValue: 5000000,
 //     classMaxValue: 10000000,
 //     symbol: {
-//       strokeStyle: 'rgba(44, 127, 184, 1)',
+//       strokeStyle: 'rgba(255, 4, 4, 1)',
 //       lineWidth: 3,
 //       lineCap: 'round'
 //     }
