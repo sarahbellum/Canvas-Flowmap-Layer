@@ -38,7 +38,7 @@ map.addLayer(canvasFlowlineLayer);
 
 | Property | Description |
 | --- | --- |
-| `originAndDestinationFieldIds` | **Required**. `Object`. This object informs the layer of your unique origin and destination attributes (fields). Both origins and destinations need to have their own unique ID attribute and geometry definition. [See example below](#originAndDestinationFieldIds-example) which includes minimum required object properties.  |
+| `originAndDestinationFieldIds` | **Required**. `Object`. This object informs the layer of your unique origin and destination attributes (fields). Both origins and destinations need to have their own unique ID attribute and geometry definition. [See example below](#originanddestinationfieldids-example) which includes minimum required object properties.  |
 | `originCircleProperties` | _Optional_. `Object`. |
 | `originHighlightCircleProperties` | _Optional_. `Object`. |
 | `destinationCircleProperties` | _Optional_. `Object`. |
