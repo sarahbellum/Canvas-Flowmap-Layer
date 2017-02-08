@@ -72,7 +72,7 @@ define([], function() {
 //   type: 'classBreaks',
 //   field: 's_Volume',
 //   defaultSymbol: {
-//     strokeStyle: 'rgba(130, 0, 0, 1)',
+//     strokeStyle: 'rgba(105, 7, 7, 1)',
 //     lineWidth: 0.5,
 //     lineCap: 'round'
 //   },
