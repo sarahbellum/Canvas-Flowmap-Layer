@@ -90,7 +90,7 @@
             <i class="icon-ui-pause icon-ui-red"></i>
             Toggle
           </button>
-          <select class="" id="pathAnimationStyleSelect" style="height: 2.1rem; width: 47%;">
+          <select class="" id="pathAnimationStyleSelect" style="height: 2.1rem; width: 49%;">
             <option value="linear" title="constant rate animation">
               Linear
             </option>
@@ -99,6 +99,32 @@
             </option>
             <option value="ease-in" title="start slow, speed up, and then remain constant">
               Ease-in
+            </option>
+          </select>
+        </div>
+
+        <div class="leader-1 font-size--2">
+          Change user interaction and path selection properties:
+        </div>
+
+        <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+          <select class="" id="userInteractionSelect" style="height: 2.1rem; width: 49%;">
+            <option value="click" title="click on origin or destination point" selected>
+              Click
+            </option>
+            <option value="mouse-over" title="hover over origin or destination point">
+              Mouse-over
+            </option>
+          </select>
+          <select class="" id="pathSelectionTypeSelect" style="height: 2.1rem; width: 47%;">
+            <option value="SELECTION_NEW" title="new selection" selected>
+              New
+            </option>
+            <option value="SELECTION_ADD" title="add to selection">
+              Add
+            </option>
+            <option value="SELECTION_SUBTRACT" title="subtract from selection">
+              Subtract
             </option>
           </select>
         </div>

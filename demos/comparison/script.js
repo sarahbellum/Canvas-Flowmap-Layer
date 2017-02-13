@@ -3,12 +3,14 @@ require([
   'esri/graphic',
   'esri/map',
   'local-resources/config',
+  'dojo/on',
   'dojo/domReady!'
 ], function(
   CanvasFlowlineLayer,
   Graphic,
   Map,
-  config
+  config,
+  on
 ) {
   var map = new Map('map', {
     basemap: 'dark-gray-vector',
@@ -88,10 +90,19 @@ require([
       });
     }
 
-    // establish layer click handlers to demonstrate the flowlines functionality
-    oneToManyLayer.on('click', handleLayerInteraction);
-    manyToOneLayer.on('click', handleLayerInteraction);
-    oneToOneLayer.on('click', handleLayerInteraction);
+    // establish each layer's click and mouse-over handlers to demonstrate the flowlines functionality
+    var clickListeners = [];
+    clickListeners.push(on.pausable(oneToManyLayer, 'click', handleLayerInteraction));
+    clickListeners.push(on.pausable(manyToOneLayer, 'click', handleLayerInteraction));
+    clickListeners.push(on.pausable(oneToOneLayer, 'click', handleLayerInteraction));
+    var mouseoverListeners = [];
+    mouseoverListeners.push(on.pausable(oneToManyLayer, 'mouse-over', handleLayerInteraction));
+    mouseoverListeners.push(on.pausable(manyToOneLayer, 'mouse-over', handleLayerInteraction));
+    mouseoverListeners.push(on.pausable(oneToOneLayer, 'mouse-over', handleLayerInteraction));
+    // begin the demo with all mouse-over listeners paused (turned off)
+    mouseoverListeners.forEach(function(listener) {
+      listener.pause();
+    });
 
     function handleLayerInteraction(evt) {
       var canvasLayer = evt.graphic.getLayer();
@@ -107,9 +118,9 @@ require([
       // this manual selection will override the displayed flowlines
 
       if (evt.isOriginGraphic) {
-        canvasLayer.selectGraphicsForPathDisplay(evt.sharedOriginGraphics, 'SELECTION_NEW');
+        canvasLayer.selectGraphicsForPathDisplay(evt.sharedOriginGraphics, pathSelectionTypeSelect.value);
       } else {
-        canvasLayer.selectGraphicsForPathDisplay(evt.sharedDestinationGraphics, 'SELECTION_NEW');
+        canvasLayer.selectGraphicsForPathDisplay(evt.sharedDestinationGraphics, pathSelectionTypeSelect.value);
       }
     }
 
@@ -130,6 +141,8 @@ require([
     var oneToOneLayerButton = document.getElementById('oneToOneLayerButton');
     var pathAnimationButton = document.getElementById('pathAnimationButton');
     var pathAnimationStyleSelect = document.getElementById('pathAnimationStyleSelect');
+    var userInteractionSelect = document.getElementById('userInteractionSelect');
+    var pathSelectionTypeSelect = document.getElementById('pathSelectionTypeSelect');
 
     oneToManyLayerButton.addEventListener('click', toggleActiveLayer);
     manyToOneLayerButton.addEventListener('click', toggleActiveLayer);
@@ -172,6 +185,25 @@ require([
       oneToManyLayer.animationStyle = evt.target.value;
       manyToOneLayer.animationStyle = evt.target.value;
       oneToOneLayer.animationStyle = evt.target.value;
+    });
+
+    // toggle click or mouse-over listeners as either paused or resumed
+    userInteractionSelect.addEventListener('change', function(evt) {
+      if (evt.target.value === 'click') {
+        clickListeners.forEach(function(clickListener) {
+          clickListener.resume();
+        });
+        mouseoverListeners.forEach(function(mouseoverListener) {
+          mouseoverListener.pause();
+        });
+      } else {
+        clickListeners.forEach(function(clickListener) {
+          clickListener.pause();
+        });
+        mouseoverListeners.forEach(function(mouseoverListener) {
+          mouseoverListener.resume();
+        });
+      }
     });
 
   });
