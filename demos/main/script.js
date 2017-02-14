@@ -23,9 +23,8 @@ require([
       visible: true,
       // CanvasFlowlineLayer custom constructor properties
       //  - required
-      originAndDestinationFieldIds: config.cityToCityLayer.originAndDestinationFieldIds,
+      originAndDestinationFieldIds: config.originAndDestinationFieldIds,
       //  - optional
-      pathProperties: config.cityToCityLayer.pathProperties,
       pathDisplayMode: 'selection', // 'selection' or 'all'
       wrapAroundCanvas: true,
       animationStarted: true,
@@ -36,7 +35,7 @@ require([
 
     // here we use Papa Parse to load and read the CSV data
     // we could have also used another library like D3js to do the same
-    Papa.parse('../../csv/Flowline_Cities_one_to_many.csv', {
+    Papa.parse('../csv-data/Flowline_Cities_one_to_many.csv', {
       download: true,
       header: true,
       dynamicTyping: true,

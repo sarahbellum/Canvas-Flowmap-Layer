@@ -1,44 +1,46 @@
 define([], function() {
   return {
-    cityToCityLayer: {
-      originAndDestinationFieldIds: {
-        // use this origin attribute to help filter unique graphics when clicking
-        originUniqueIdField: 's_city_id',
-        originGeometry: {
-          x: 's_lon',
-          y: 's_lat',
-          spatialReference: {
-            wkid: 4326
-          }
-        },
-        // use this destination attribute to refrain from re-drawing identical destination graphics
-        // i.e. only show 1 destination per each unique entry in the csv in the canvas
-        destinationUniqueIdField: 'e_city_id',
-        destinationGeometry: {
-          x: 'e_lon',
-          y: 'e_lat',
-          spatialReference: {
-            wkid: 4326
-          }
+
+    // required information to inform the CanvasFlowlineLayer which origin and destination attributes to rely on
+    originAndDestinationFieldIds: {
+      // use this origin attribute to help filter unique graphics when clicking
+      originUniqueIdField: 's_city_id',
+      originGeometry: {
+        x: 's_lon',
+        y: 's_lat',
+        spatialReference: {
+          wkid: 4326
         }
       },
-
-      pathProperties: {
-        type: 'simple',
-        symbol: {
-          strokeStyle: 'rgba(207, 241, 17, 0.8)',
-          shadowBlur: 1.5,
-          lineWidth: 0.5,
-          shadowColor: 'rgb(207, 241, 17)',
-          lineCap: 'round'
+      // use this destination attribute to refrain from re-drawing identical destination graphics
+      // i.e. only show 1 destination per each unique entry in the csv in the canvas
+      destinationUniqueIdField: 'e_city_id',
+      destinationGeometry: {
+        x: 'e_lon',
+        y: 'e_lat',
+        spatialReference: {
+          wkid: 4326
         }
       }
-
     }
+
   };
 });
 
-// EXAMPLE OF POINT SYMBOL PROPERTIES WITH CATEGORICAL/UNIQUE VALUES:
+// EXAMPLE OF PATH PROPERTIES WITH A SIMPLE (SINGLE) SYMBOL:
+
+// pathProperties: {
+//   type: 'simple',
+//   symbol: {
+//     strokeStyle: 'rgba(207, 241, 17, 0.8)',
+//     shadowBlur: 1.5,
+//     lineWidth: 0.5,
+//     shadowColor: 'rgb(207, 241, 17)',
+//     lineCap: 'round'
+//   }
+// }
+
+// EXAMPLE OF DESTINATION POINT SYMBOL PROPERTIES WITH CATEGORICAL/UNIQUE VALUES:
 
 // destinationCircleProperties: {
 //   type: 'uniqueValue',

@@ -25,9 +25,8 @@ require([
       visible: true,
       // CanvasFlowlineLayer custom constructor properties
       //  - required
-      originAndDestinationFieldIds: config.cityToCityLayer.originAndDestinationFieldIds,
+      originAndDestinationFieldIds: config.originAndDestinationFieldIds,
       //  - optional
-      pathProperties: config.cityToCityLayer.pathProperties,
       pathDisplayMode: 'selection', // 'selection' or 'all'
       wrapAroundCanvas: true,
       animationStarted: true,
@@ -37,8 +36,7 @@ require([
     var manyToOneLayer = new CanvasFlowlineLayer({
       id: 'manyToOneLayer',
       visible: false,
-      originAndDestinationFieldIds: config.cityToCityLayer.originAndDestinationFieldIds,
-      pathProperties: config.cityToCityLayer.pathProperties,
+      originAndDestinationFieldIds: config.originAndDestinationFieldIds,
       pathDisplayMode: 'selection',
       wrapAroundCanvas: true,
       animationStarted: true,
@@ -48,8 +46,7 @@ require([
     var oneToOneLayer = new CanvasFlowlineLayer({
       id: 'oneToOneLayer',
       visible: false,
-      originAndDestinationFieldIds: config.cityToCityLayer.originAndDestinationFieldIds,
-      pathProperties: config.cityToCityLayer.pathProperties,
+      originAndDestinationFieldIds: config.originAndDestinationFieldIds,
       pathDisplayMode: 'selection',
       wrapAroundCanvas: true,
       animationStarted: true,
@@ -58,9 +55,9 @@ require([
 
     map.addLayers([oneToManyLayer, manyToOneLayer, oneToOneLayer]);
 
-    createGraphicsFromCsv('../../csv/Flowline_Cities_one_to_many.csv', oneToManyLayer);
-    createGraphicsFromCsv('../../csv/Flowline_Cities_many_to_one.csv', manyToOneLayer);
-    createGraphicsFromCsv('../../csv/Flowline_Cities_one_to_one.csv', oneToOneLayer);
+    createGraphicsFromCsv('../csv-data/Flowline_Cities_one_to_many.csv', oneToManyLayer);
+    createGraphicsFromCsv('../csv-data/Flowline_Cities_many_to_one.csv', manyToOneLayer);
+    createGraphicsFromCsv('../csv-data/Flowline_Cities_one_to_one.csv', oneToOneLayer);
 
     // here we use Papa Parse to load and read the CSV data
     // we could have also used another library like D3js to do the same

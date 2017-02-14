@@ -515,7 +515,20 @@ define([
         ghostSymbolRadius = configCirclePropertyObject.uniqueValueInfos.filter(function(info) {
           return info.value === ghostGraphic.attributes[configCirclePropertyObject.field];
         })[0].symbol.radius;
+      } else if (configCirclePropertyObject.type === 'classBreaks') {
+        var filteredSymbols = configCirclePropertyObject.classBreakInfos.filter(function(info) {
+          return (
+            info.classMinValue <= ghostGraphic.attributes[configCirclePropertyObject.field] &&
+            info.classMaxValue >= ghostGraphic.attributes[configCirclePropertyObject.field]
+          );
+        });
+        if (filteredSymbols.length) {
+          ghostSymbolRadius = filteredSymbols[0].symbol.radius;
+        } else {
+          ghostSymbolRadius = canvasPathProperties.defaultSymbol.radius;
+        }
       }
+
       ghostSymbol.setSize(ghostSymbolRadius * 2);
 
       ghostSymbol.outline.setColor(new Color([0, 0, 0, 0]));
@@ -574,6 +587,18 @@ define([
         symbol = canvasCircleProperties.uniqueValueInfos.filter(function(info) {
           return info.value === graphic.attributes[canvasCircleProperties.field];
         })[0].symbol;
+      } else if (canvasCircleProperties.type === 'classBreaks') {
+        var filteredSymbols = canvasCircleProperties.classBreakInfos.filter(function(info) {
+          return (
+            info.classMinValue <= graphic.attributes[canvasCircleProperties.field] &&
+            info.classMaxValue >= graphic.attributes[canvasCircleProperties.field]
+          );
+        });
+        if (filteredSymbols.length) {
+          symbol = filteredSymbols[0].symbol;
+        } else {
+          symbol = canvasCircleProperties.defaultSymbol;
+        }
       }
 
       // ensure that canvas features will be drawn beyond +/-180 longitude
