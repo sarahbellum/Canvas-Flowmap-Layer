@@ -760,10 +760,6 @@ define([
       // linear: constant rate animation
 
       this._offset += 1;
-
-      if (this._offset > this._resetOffset) {
-        this._offset = 0;
-      }
     },
 
     _easeOutAnimator: function() {
