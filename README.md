@@ -9,9 +9,9 @@ Extends JSAPI 3.x [esri/layers/GraphicsLayer](https://developers.arcgis.com/java
 ## Purpose
 
 Flow mapping is a cartographic necessity, yet still lacks empirical design rules (Jenny, et al. 2016). Common solutions for dynamic flow mapping include using straight lines and geodesic lines, both of which have immediate visual limitations. Using a Bezier curve where each curve on the map is created with the same formula benefits mappers twofold: 1) Aesthetics. While straight lines are not inherently ugly, an overlapping or convergence of them across a global dataset can be. A series of Bezier curves with the same formula, even when displaying an over-abundance, has a mathematical congruent flow which greatly improves the map's aesthetics  
-![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/img_01.png)  
+![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/img_01.png?token=AJ3KYoQVAAU_r8tL5i3c3eNV5ltGZ_Fcks5YuIEjwA%3D%3D)  
 2) Directional symbology. Whether the curve is convex or concave depends on the direction of the line. This symbology might be too new immediately intuit, however this rule is required for aesthetic veracity and consistency. The bonus is that after time, map readers can immediately know the direction of the flowline without having to add animation.  
-![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/img_02.png)
+![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/img_02.png?token=AJ3KYn8Q1u_Gh7isNNUfLG5WUxaTryz1ks5YuIFVwA%3D%3D)
 
 ## Constructor Summary
 
@@ -82,7 +82,7 @@ map.addLayer(canvasFlowlineLayer);
 ```
 ## Line Animation
 The convexity or concavity of the curve *does* convey the direction of the flowline, but the directionality won't be easily intuited due to its novelty. In the event that this mapping technique catches like wildfire, we can delete the second part of the previous sentence. In the mean time, we've added line animations, similar to the  "ants marching" effect, but with a nice easing inspired by [this Kirupa post](https://www.kirupa.com/html5/introduction_to_easing_in_javascript.htm). The Canvas-Flowline-Layer uses two separate lines when animation is added, although using two lines is not required to achieve animation. The first line is the solid static Bezier curve, and the second line is the dotted or hashed *animated* Bezier curve that sits on top of the first line.  
-![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/lineanimation.gif)
+![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/lineanimation.gif?token=AJ3KYsi3ObT5Ep1gzRzY0GXAwuFEJ9Ovks5YuIFvwA%3D%3D)
 ## Method Summary
 
 | Method | Description |
@@ -109,10 +109,10 @@ The convexity or concavity of the curve *does* convey the direction of the flowl
 The examples show three different types of data relationships that can be used to add lines to the map: one-to-many; many-to-one; one-to-one, where the first part of these relationships indicate the origin ("one" or "many"), and the last part indicates the destination. There are three different csv files used for this implementation of the Canvas-Flowline-Layer, one for each data relationship type.
 ##### one-to-many
 In the one-to-many csv file, the *one* or origin exists on several rows - one row for each of its destinations. Each destination in the one-to-many is only listed on one row, which is the same row as its origin. So the number of rows for each origin is determined by the number of destinations it supplies. In the image below, The city of Hechi and San Jose are both origins; Hechi supplies 9 destinations: Sahr, Tandil, Victorville, Cranbourne, Cuirco, Dahuk, Olympia, Oostanay, and Oran.  
-![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/one-to-many.png)
+![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/one-to-many.png?token=AJ3KYveLuEsb_hoML6UfDKiQydSm82vNks5YuIGqwA%3D%3D)
 ##### many-to-one
 The many-to-one csv file for this implementation of the Canvas-Flowline-Layer is similar to the concept of the one-to-many csv file explained above. In the image below, many origin cities supply the one city of Hechi.  
-![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/many-to-one.png)  
+![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/one-to-many.png?token=AJ3KYr_ELiXyKUyHTOCz4xRHaBdb3YD9ks5YuIHJwA%3D%3D)  
 ##### one-to-one
 In the csv file for the one-to-one data relationship, each origin exists on one row only along with its one destination.  
 
