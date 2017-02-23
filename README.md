@@ -1,12 +1,19 @@
 # Canvas-Flowline-Layer
 
-Cool summary...
+The Canvas-Flowline-Layer extends the Esri JSAPI to map the flow of objects from an origin point to a destination point by using a Bezier curve. Esri graphics are translated to pixel space so that rendering for the points and curves are mapped to the canvas.
 
-### API
+## API
 
 Extends JSAPI 3.x [esri/layers/GraphicsLayer](https://developers.arcgis.com/javascript/3/jsapi/graphicslayer-amd.html). All properties, methods, and events provided by the `GraphicsLayer` should be available in this `CanvasFlowlineLayer`.
 
-### Constructor Summary
+## Purpose
+
+Flow mapping is a cartographic necessity, yet still lacks empirical design rules (Jenny, et al. 2016). Common solutions for dynamic flow mapping include using straight lines and geodesic lines, both of which have immediate visual limitations. Using a Bezier curve where each curve on the map is created with the same formula benefits mappers twofold: 1) Aesthetics. While straight lines are not inherently ugly, an overlapping or convergence of them across a global dataset can be. A series of Bezier curves with the same formula, even when displaying an over-abundance, has a mathematical congruent flow which greatly improves the map's aesthetics  
+![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/img_01.png)  
+2) Directional symbology. Whether the curve is convex or concave depends on the direction of the line. This symbology might be too new immediately intuit, however this rule is required for aesthetic veracity and consistency. The bonus is that after time, map readers can immediately know the direction of the flowline without having to add animation.  
+![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/img_02.png)
+
+## Constructor Summary
 
 ```javascript
 // an example of constructing a new layer
@@ -34,17 +41,17 @@ canvasFlowlineLayer.addGraphics([pointGraphic1, pointGraphic2, ..., pointGraphic
 map.addLayer(canvasFlowlineLayer);
 ```
 
-### Property Summary
+## Property Summary
 
 | Property | Description |
 | --- | --- |
 | `originAndDestinationFieldIds` | **Required**. `Object`. This object informs the layer of your unique origin and destination attributes (fields). Both origins and destinations need to have their own unique ID attribute and geometry definition. [See example below](#originanddestinationfieldids-example) which includes minimum required object properties.  |
-| `originCircleProperties` | _Optional_. `Object`. |
-| `originHighlightCircleProperties` | _Optional_. `Object`. |
-| `destinationCircleProperties` | _Optional_. `Object`. |
-| `destinationHighlightCircleProperties` | _Optional_. `Object`. |
-| `pathProperties` | _Optional_. `Object`. |
-| `animatePathProperties` | _Optional_. `Object`. |
+| `originCircleProperties` | _Optional_. `Object`. This object defines the properties of the origin point as rendered on the HTML Canvas. |
+| `originHighlightCircleProperties` | _Optional_. `Object`. This object defines the properties of the origin point as rendered on the HTML Canvas when highlighted. |
+| `destinationCircleProperties` | _Optional_. `Object`. This object defines the properties of the destination point as rendered on the HTML Canvas. |
+| `destinationHighlightCircleProperties` | _Optional_. `Object`. This object defines the properties of the destination point as rendered on the HTML Canvas when highlighted. |
+| `pathProperties` | _Optional_. `Object`. This object defines the properties of the non-animated Bezier curve that is drawn on the canvas connecting an origin points to a destination point. |
+| `animatePathProperties` | _Optional_. `Object`. This defines the properties of the animated Bezier curve that is drawn on the canvas directly on top of the non-animated Bezier curve. [See Line Animation below ](#Line Animation)  |
 | `pathDisplayMode` | _Optional_. `String`. Valid values: `'selection'` or `'all'`. Defaults to `'all'`. |
 | `wrapAroundCanvas` | _Optional_. `Boolean`. Defaults to `true`. |
 | `animationStarted` | _Optional_. `Boolean`. Defaults to `false`. |
@@ -73,8 +80,10 @@ map.addLayer(canvasFlowlineLayer);
   }
 }
 ```
-
-### Method Summary
+## Line Animation
+The convexity or concavity of the curve *does* convey the direction of the flowline, but the directionality won't be easily intuited due to its novelty. In the event that this mapping technique catches like wildfire, we can delete the second part of the previous sentence. In the mean time, we've added line animations, similar to the  "ants marching" effect, but with a nice easing inspired by [this Kirupa post](https://www.kirupa.com/html5/introduction_to_easing_in_javascript.htm). The Canvas-Flowline-Layer uses two separate lines when animation is added, although using two lines is not required to achieve animation. The first line is the solid static Bezier curve, and the second line is the dotted or hashed *animated* Bezier curve that sits on top of the first line.  
+![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/lineanimation.gif)
+## Method Summary
 
 | Method | Description |
 | --- | --- |
@@ -87,9 +96,27 @@ map.addLayer(canvasFlowlineLayer);
 | `playAnimation([animationStyle])` | This does... This returns... |
 | `stopAnimation()` | This does... This returns... |
 
-### Event Summary
+## Event Summary
 
 | Event | Description |
 | --- | --- |
 | `click` | Extends [`GraphicsLayer click`](https://developers.arcgis.com/javascript/3/jsapi/graphicslayer-amd.html#event-click) and adds the following properties to the event object: `isOriginGraphic`, `true` if an origin graphic has been clicked, but `false` if a destination graphic has been clicked; `sharedOriginGraphics`, array of graphics that share the same origin; `sharedDestinationGraphics`, array of graphics that share the same destination. |
 | `mouse-over` | Extends [`GraphicsLayer mouse-over`](https://developers.arcgis.com/javascript/3/jsapi/graphicslayer-amd.html#event-mouse-over) and adds the following properties to the event object: `isOriginGraphic`, `true` when the mouse first entered an origin graphic, but `false` when the mouse first entered a destination graphic; `sharedOriginGraphics`, array of graphics that share the same origin; `sharedDestinationGraphics`, array of graphics that share the same destination. |
+
+## Options
+
+### Data relationships
+The examples show three different types of data relationships that can be used to add lines to the map: one-to-many; many-to-one; one-to-one, where the first part of these relationships indicate the origin ("one" or "many"), and the last part indicates the destination. There are three different csv files used for this implementation of the Canvas-Flowline-Layer, one for each data relationship type.
+##### one-to-many
+In the one-to-many csv file, the *one* or origin exists on several rows - one row for each of its destinations. Each destination in the one-to-many is only listed on one row, which is the same row as its origin. So the number of rows for each origin is determined by the number of destinations it supplies. In the image below, The city of Hechi and San Jose are both origins; Hechi supplies 9 destinations: Sahr, Tandil, Victorville, Cranbourne, Cuirco, Dahuk, Olympia, Oostanay, and Oran.  
+![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/one-to-many.png)
+##### many-to-one
+The many-to-one csv file for this implementation of the Canvas-Flowline-Layer is similar to the concept of the one-to-many csv file explained above. In the image below, many origin cities supply the one city of Hechi.  
+![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowline-Layer/jsapi3-canvas-layer/img/many-to-one.png)  
+##### one-to-one
+In the csv file for the one-to-one data relationship, each origin exists on one row only along with its one destination.  
+
+#### Animation Properties
+The animation property options provided are linear, ease-out, and ease-in. The default `animationStyle` can be changed, and the properties for the animation styles are changed with the `animatePathProperties`.  
+#### Interactive Properties
+You can change how users interact with this map by updating the requirements for how the Bezier curves appear and disappear.
