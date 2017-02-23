@@ -525,7 +525,7 @@ define([
         if (filteredSymbols.length) {
           ghostSymbolRadius = filteredSymbols[0].symbol.radius;
         } else {
-          ghostSymbolRadius = canvasPathProperties.defaultSymbol.radius;
+          ghostSymbolRadius = configCirclePropertyObject.defaultSymbol.radius;
         }
       }
 
@@ -552,10 +552,7 @@ define([
       var originUniqueIdField = this.originAndDestinationFieldIds.originUniqueIdField;
       var destinationUniqueIdField = this.originAndDestinationFieldIds.destinationUniqueIdField;
 
-      // TODO: does the following logic still hold for these origin-to-destination relationships?
-      //  - 1-to-1
-      //  - 1-to-many
-      //  - many-to-1
+      var ctx = this._canvasElement.getContext('2d');
 
       // loop over all graphics
       this.graphics.forEach(function(graphic) {
@@ -567,18 +564,18 @@ define([
           originUniqueIdValues.push(attributes[originUniqueIdField]);
           canvasCircleProperties = attributes._isSelectedForHighlight ? this.originHighlightCircleProperties : this.originCircleProperties;
 
-          this._drawNewCanvasPoint(graphic, canvasCircleProperties);
+          this._drawNewCanvasPoint(ctx, graphic, canvasCircleProperties);
         } else if (!isOrigin && destinationUniqueIdValues.indexOf(attributes[destinationUniqueIdField]) === -1) {
           destinationUniqueIdValues.push(attributes[destinationUniqueIdField]);
           canvasCircleProperties = attributes._isSelectedForHighlight ? this.destinationHighlightCircleProperties : this.destinationCircleProperties;
 
-          this._drawNewCanvasPoint(graphic, canvasCircleProperties);
+          this._drawNewCanvasPoint(ctx, graphic, canvasCircleProperties);
         }
 
       }, this);
     },
 
-    _drawNewCanvasPoint: function(graphic, canvasCircleProperties) {
+    _drawNewCanvasPoint: function(ctx, graphic, canvasCircleProperties) {
       // get the canvas symbol properties
       var symbol;
       if (canvasCircleProperties.type === 'simple') {
@@ -608,11 +605,10 @@ define([
       var screenPoint = this._map.toScreen(geometry);
 
       // draw a circle point on the canvas
-      this._applyCanvasPointSymbol(symbol, screenPoint);
+      this._applyCanvasPointSymbol(ctx, symbol, screenPoint);
     },
 
-    _applyCanvasPointSymbol: function(symbolObject, screenPoint) {
-      var ctx = this._canvasElement.getContext('2d');
+    _applyCanvasPointSymbol: function(ctx, symbolObject, screenPoint) {
       ctx.globalCompositeOperation = symbolObject.globalCompositeOperation;
       ctx.fillStyle = symbolObject.fillStyle;
       ctx.lineWidth = symbolObject.lineWidth;
@@ -628,6 +624,14 @@ define([
     _drawSelectedCanvasPaths: function(animate) {
       var originAndDestinationFieldIds = this.originAndDestinationFieldIds;
 
+      var ctx;
+      if (animate) {
+        ctx = this._animationCanvasElement.getContext('2d');
+      } else {
+        ctx = this._canvasElement.getContext('2d');
+      }
+      ctx.beginPath();
+
       this.graphics.forEach(function(graphic) {
         var attributes = graphic.attributes;
 
@@ -640,6 +644,7 @@ define([
 
           if (animate) {
             this._drawNewCanvasPath(
+              ctx,
               this.animatePathProperties,
               attributes,
               originXCoordinate, originYCoordinate,
@@ -649,6 +654,7 @@ define([
             );
           } else {
             this._drawNewCanvasPath(
+              ctx,
               this.pathProperties,
               attributes,
               originXCoordinate, originYCoordinate,
@@ -659,9 +665,12 @@ define([
 
         }
       }, this);
+
+      ctx.stroke();
+      ctx.closePath();
     },
 
-    _drawNewCanvasPath: function(canvasPathProperties, graphicAttributes, originXCoordinate, originYCoordinate, destinationXCoordinate, destinationYCoordinate, spatialReference, animate) {
+    _drawNewCanvasPath: function(ctx, canvasPathProperties, graphicAttributes, originXCoordinate, originYCoordinate, destinationXCoordinate, destinationYCoordinate, spatialReference, animate) {
       // get the canvas symbol properties
       var symbol;
       var filteredSymbols;
@@ -697,28 +706,23 @@ define([
 
       // draw a curved canvas line
       if (animate) {
-        this._animateCanvasLineSymbol(symbol, screenOriginPoint, screenDestinationPoint);
+        this._animateCanvasLineSymbol(ctx, symbol, screenOriginPoint, screenDestinationPoint);
       } else {
-        this._applyCanvasLineSymbol(symbol, screenOriginPoint, screenDestinationPoint);
+        this._applyCanvasLineSymbol(ctx, symbol, screenOriginPoint, screenDestinationPoint);
       }
     },
 
-    _applyCanvasLineSymbol: function(symbolObject, screenOriginPoint, screenDestinationPoint) {
-      var ctx = this._canvasElement.getContext('2d');
+    _applyCanvasLineSymbol: function(ctx, symbolObject, screenOriginPoint, screenDestinationPoint) {
       ctx.lineCap = symbolObject.lineCap;
       ctx.lineWidth = symbolObject.lineWidth;
       ctx.strokeStyle = symbolObject.strokeStyle;
       ctx.shadowBlur = symbolObject.shadowBlur;
       ctx.shadowColor = symbolObject.shadowColor;
-      ctx.beginPath();
       ctx.moveTo(screenOriginPoint.x, screenOriginPoint.y);
       ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
-      ctx.stroke();
-      ctx.closePath();
     },
 
-    _animateCanvasLineSymbol: function(symbolObject, screenOriginPoint, screenDestinationPoint) {
-      var ctx = this._animationCanvasElement.getContext('2d');
+    _animateCanvasLineSymbol: function(ctx, symbolObject, screenOriginPoint, screenDestinationPoint) {
       ctx.lineCap = symbolObject.lineCap;
       ctx.lineWidth = symbolObject.lineWidth;
       ctx.strokeStyle = symbolObject.strokeStyle;
@@ -726,11 +730,8 @@ define([
       ctx.shadowColor = symbolObject.shadowColor;
       ctx.setLineDash([this._lineDashOffsetSize, this._lineDashOffsetSize + this._resetOffset]);
       ctx.lineDashOffset = -this._offset; // this makes the dot appear to move when the entire top canvas is redrawn
-      ctx.beginPath();
       ctx.moveTo(screenOriginPoint.x, screenOriginPoint.y);
       ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
-      ctx.stroke();
-      ctx.closePath();
     },
 
     _animator: function() {
