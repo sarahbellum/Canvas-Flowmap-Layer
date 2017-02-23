@@ -12,6 +12,15 @@ require([
   config,
   on
 ) {
+  // establish references to form elements in the controls card
+  var oneToManyLayerButton = document.getElementById('oneToManyLayerButton');
+  var manyToOneLayerButton = document.getElementById('manyToOneLayerButton');
+  var oneToOneLayerButton = document.getElementById('oneToOneLayerButton');
+  var pathAnimationButton = document.getElementById('pathAnimationButton');
+  var pathAnimationStyleSelect = document.getElementById('pathAnimationStyleSelect');
+  var userInteractionSelect = document.getElementById('userInteractionSelect');
+  var pathSelectionTypeSelect = document.getElementById('pathSelectionTypeSelect');
+  
   var map = new Map('map', {
     basemap: 'dark-gray-vector',
     center: [22, 14],
@@ -133,14 +142,6 @@ require([
     }, 3000);
 
     // establish actions for form elements in the controls card
-    var oneToManyLayerButton = document.getElementById('oneToManyLayerButton');
-    var manyToOneLayerButton = document.getElementById('manyToOneLayerButton');
-    var oneToOneLayerButton = document.getElementById('oneToOneLayerButton');
-    var pathAnimationButton = document.getElementById('pathAnimationButton');
-    var pathAnimationStyleSelect = document.getElementById('pathAnimationStyleSelect');
-    var userInteractionSelect = document.getElementById('userInteractionSelect');
-    var pathSelectionTypeSelect = document.getElementById('pathSelectionTypeSelect');
-
     oneToManyLayerButton.addEventListener('click', toggleActiveLayer);
     manyToOneLayerButton.addEventListener('click', toggleActiveLayer);
     oneToOneLayerButton.addEventListener('click', toggleActiveLayer);
