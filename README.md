@@ -135,7 +135,7 @@ map.addLayer(canvasFlowmapLayer);
 ### Method Summary
 
 | Method | Arguments | Description |
-| --- | --- |
+| --- | --- | --- |
 | `addGraphics(inputGraphics)` | 1.`inputGraphics`: `Array` of Esri graphics. | This method will prove to be one of your best friends. It is the main "entry point" for adding to the layer the origin-destination graphics you are responsible for creating from your own data source. |
 | `selectGraphicsForPathDisplay(selectionGraphics, selectionMode)`  | 1.`selectionGraphics`: `Array` of Esri graphics that were already added to the layer. 2.`selectionMode`: `String`. Valid values: `'SELECTION_NEW'`, `'SELECTION_ADD'`, or `'SELECTION_SUBTRACT'`. | This informs the layer which Bezier curves should be drawn on the map. For example, you can most easily use this in conjunction with a `click` or `mouse-over` event listener. |
 | `selectGraphicsForPathDisplayById(uniqueOriginOrDestinationIdField, idValue, originBoolean, selectionMode)` |  | This is a convenience method if the unique origin or destination value is already known and you do not wish to rely on a `click` or `mouse-over` event listener. |
