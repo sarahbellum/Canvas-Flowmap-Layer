@@ -1,7 +1,7 @@
 define([], function() {
   return {
 
-    // required information to inform the CanvasFlowlineLayer which origin and destination attributes to rely on
+    // required information to inform the CanvasFlowmapLayer which origin and destination attributes to rely on
     originAndDestinationFieldIds: {
       // use this origin attribute to help filter unique graphics when clicking
       originUniqueIdField: 's_city_id',

@@ -1,11 +1,11 @@
 require([
-  'Canvas-Flowline-Layer/CanvasFlowlineLayer',
+  'Canvas-Flowmap-Layer/CanvasFlowmapLayer',
   'esri/graphic',
   'esri/map',
   'local-resources/config',
   'dojo/domReady!'
 ], function(
-  CanvasFlowlineLayer,
+  CanvasFlowmapLayer,
   Graphic,
   Map,
   config
@@ -17,11 +17,11 @@ require([
   });
 
   map.on('load', function() {
-    var cityToCityLayer = new CanvasFlowlineLayer({
+    var cityToCityLayer = new CanvasFlowmapLayer({
       // JSAPI GraphicsLayer constructor properties
       id: 'cityToCityLayer',
       visible: true,
-      // CanvasFlowlineLayer custom constructor properties
+      // CanvasFlowmapLayer custom constructor properties
       //  - required
       originAndDestinationFieldIds: config.originAndDestinationFieldIds,
       //  - optional
@@ -35,7 +35,7 @@ require([
 
     // here we use Papa Parse to load and read the CSV data
     // we could have also used another library like D3js to do the same
-    Papa.parse('../csv-data/Flowline_Cities_one_to_many.csv', {
+    Papa.parse('../csv-data/Flowmap_Cities_one_to_many.csv', {
       download: true,
       header: true,
       dynamicTyping: true,
@@ -54,7 +54,7 @@ require([
           });
         });
 
-        // add all graphics to the canvas flowline layer
+        // add all graphics to the canvas flowmap layer
         cityToCityLayer.addGraphics(csvGraphics);
       }
     });
@@ -64,10 +64,10 @@ require([
       // evt.sharedDestinationGraphics: array of all ORIGIN graphics with the same DESTINATION ID field
       //  - you can mark shared origin or destination graphics as selected for path display using these modes:
       //    - 'SELECTION_NEW', 'SELECTION_ADD', or 'SELECTION_SUBTRACT'
-      //  - these selected graphics inform the canvas flowline layer which flow line paths to display
+      //  - these selected graphics inform the canvas flowmap layer which paths to display
 
       // NOTE: if the layer's pathDisplayMode was originally set to "all",
-      // this manual selection will override the displayed flowlines
+      // this manual selection will override the displayed paths
       if (evt.sharedOriginGraphics.length) {
         cityToCityLayer.selectGraphicsForPathDisplay(evt.sharedOriginGraphics, 'SELECTION_NEW');
       }
@@ -75,23 +75,5 @@ require([
         cityToCityLayer.selectGraphicsForPathDisplay(evt.sharedDestinationGraphics, 'SELECTION_NEW');
       }
     });
-
-    // layer visibility and map add/remove tests
-
-    // map.on('click', function() {
-    //   cityToCityLayer.hide();
-    //   setTimeout(function() {
-    //     cityToCityLayer.show();
-    //   }, 5000);
-    // });
-
-    // map.on('click', function() {
-    //   map.removeLayer(cityToCityLayer);
-    //   setTimeout(function() {
-    //     map.addLayer(cityToCityLayer);
-    //   }, 5000);
-    // });
-
   });
-
 });

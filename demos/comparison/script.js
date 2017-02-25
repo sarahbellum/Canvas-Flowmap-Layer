@@ -1,12 +1,12 @@
 require([
-  'Canvas-Flowline-Layer/CanvasFlowlineLayer',
+  'Canvas-Flowmap-Layer/CanvasFlowmapLayer',
   'esri/graphic',
   'esri/map',
   'local-resources/config',
   'dojo/on',
   'dojo/domReady!'
 ], function(
-  CanvasFlowlineLayer,
+  CanvasFlowmapLayer,
   Graphic,
   Map,
   config,
@@ -20,7 +20,7 @@ require([
   var pathAnimationStyleSelect = document.getElementById('pathAnimationStyleSelect');
   var userInteractionSelect = document.getElementById('userInteractionSelect');
   var pathSelectionTypeSelect = document.getElementById('pathSelectionTypeSelect');
-  
+
   var map = new Map('map', {
     basemap: 'dark-gray-vector',
     center: [22, 14],
@@ -28,11 +28,11 @@ require([
   });
 
   map.on('load', function() {
-    var oneToManyLayer = new CanvasFlowlineLayer({
+    var oneToManyLayer = new CanvasFlowmapLayer({
       // JSAPI GraphicsLayer constructor properties
       id: 'oneToManyLayer',
       visible: true,
-      // CanvasFlowlineLayer custom constructor properties
+      // CanvasFlowmapLayer custom constructor properties
       //  - required
       originAndDestinationFieldIds: config.originAndDestinationFieldIds,
       //  - optional
@@ -42,7 +42,7 @@ require([
       animationStyle: 'ease-out' // 'linear', 'ease-out', or 'ease-in'
     });
 
-    var manyToOneLayer = new CanvasFlowlineLayer({
+    var manyToOneLayer = new CanvasFlowmapLayer({
       id: 'manyToOneLayer',
       visible: false,
       originAndDestinationFieldIds: config.originAndDestinationFieldIds,
@@ -52,7 +52,7 @@ require([
       animationStyle: 'ease-out'
     });
 
-    var oneToOneLayer = new CanvasFlowlineLayer({
+    var oneToOneLayer = new CanvasFlowmapLayer({
       id: 'oneToOneLayer',
       visible: false,
       originAndDestinationFieldIds: config.originAndDestinationFieldIds,
@@ -64,9 +64,9 @@ require([
 
     map.addLayers([oneToManyLayer, manyToOneLayer, oneToOneLayer]);
 
-    createGraphicsFromCsv('../csv-data/Flowline_Cities_one_to_many.csv', oneToManyLayer);
-    createGraphicsFromCsv('../csv-data/Flowline_Cities_many_to_one.csv', manyToOneLayer);
-    createGraphicsFromCsv('../csv-data/Flowline_Cities_one_to_one.csv', oneToOneLayer);
+    createGraphicsFromCsv('../csv-data/Flowmap_Cities_one_to_many.csv', oneToManyLayer);
+    createGraphicsFromCsv('../csv-data/Flowmap_Cities_many_to_one.csv', manyToOneLayer);
+    createGraphicsFromCsv('../csv-data/Flowmap_Cities_one_to_one.csv', oneToOneLayer);
 
     // here we use Papa Parse to load and read the CSV data
     // we could have also used another library like D3js to do the same
@@ -90,13 +90,13 @@ require([
             });
           });
 
-          // add all graphics to the canvas flowline layer
+          // add all graphics to the canvas flowmap layer
           canvasLayer.addGraphics(csvGraphics);
         }
       });
     }
 
-    // establish each layer's click and mouse-over handlers to demonstrate the flowlines functionality
+    // establish each layer's click and mouse-over handlers to demonstrate the flowmap functionality
     var clickListeners = [];
     clickListeners.push(on.pausable(oneToManyLayer, 'click', handleLayerInteraction));
     clickListeners.push(on.pausable(manyToOneLayer, 'click', handleLayerInteraction));
@@ -118,10 +118,10 @@ require([
 
       // - you can mark shared origin or destination graphics as selected for path display using these modes:
       //   - 'SELECTION_NEW', 'SELECTION_ADD', or 'SELECTION_SUBTRACT'
-      // - these selected graphics inform the canvas flowline layer which flow line paths to display
+      // - these selected graphics inform the canvas flowmap layer which paths to display
 
       // NOTE: if the layer's pathDisplayMode was originally set to "all",
-      // this manual selection will override the displayed flowlines
+      // this manual selection will override the displayed paths
 
       if (evt.isOriginGraphic) {
         canvasLayer.selectGraphicsForPathDisplay(evt.sharedOriginGraphics, pathSelectionTypeSelect.value);
@@ -134,7 +134,7 @@ require([
       // show the controls card after a brief delay
       document.getElementById('controlsPanelCard').classList.remove('off');
 
-      // automatically select some graphics for path display to demonstrate the flowlines functionality,
+      // automatically select some graphics for path display to demonstrate the flowmap functionality,
       // without the user having to first click on the layer
       oneToManyLayer.selectGraphicsForPathDisplayById('s_city_id', 562, true, 'SELECTION_NEW');
       manyToOneLayer.selectGraphicsForPathDisplayById('e_city_id', 562, false, 'SELECTION_NEW');
@@ -203,7 +203,5 @@ require([
         });
       }
     });
-
   });
-
 });
