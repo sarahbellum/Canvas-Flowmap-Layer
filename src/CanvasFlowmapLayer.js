@@ -136,8 +136,6 @@ define([
     EXTENDED JSAPI GRAPHICSLAYER METHODS
     */
 
-    // TODO: test out and finalize which GraphicsLayer methods need to be overridden
-
     _setMap: function() {
       var div = this.inherited(arguments); // required for JSAPI
 
@@ -164,14 +162,10 @@ define([
       this._clearCanvas();
     },
 
-    // add: function(graphic) {
-    //   this.inherited(arguments);
-    // },
-
-    // clear: function() {
-    //   this.inherited(arguments);
-    //   this._clearCanvas();
-    // },
+    clear: function() {
+      this.inherited(arguments);
+      this._clearCanvas();
+    },
 
     /*
     PUBLIC METHODS
@@ -344,11 +338,12 @@ define([
       // clear out previous drawn canvas content
       // e.g. when a zoom begins,
       // or just prior to changing the displayed contents in the canvas
-      var ctx = this._canvasElement.getContext('2d');
-      ctx.clearRect(0, 0, this._canvasElement.width, this._canvasElement.height);
+      this._canvasElement.getContext('2d')
+        .clearRect(0, 0, this._canvasElement.width, this._canvasElement.height);
 
-      ctx = this._animationCanvasElement.getContext('2d');
-      ctx.clearRect(0, 0, this._animationCanvasElement.width, this._animationCanvasElement.height);
+      this._animationCanvasElement.getContext('2d')
+        .clearRect(0, 0, this._animationCanvasElement.width, this._animationCanvasElement.height);
+
       if (this._animationFrameId) {
         window.cancelAnimationFrame(this._animationFrameId);
       }
