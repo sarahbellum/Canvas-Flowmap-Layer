@@ -1,6 +1,8 @@
 # Canvas-Flowmap-Layer
 
-The Canvas-Flowmap-Layer extends the ArcGIS API for JavaScript (Esri JSAPI) to map the flow of objects from an origin point to a destination point by using a Bezier curve. Esri graphics are translated to pixel space so that rendering for the points and curves are mapped to an [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement).
+The Canvas-Flowmap-Layer extends the ArcGIS API for JavaScript (Esri JSAPI) to map the flow of objects from an origin point to a destination point by using a Bezier curve. Esri graphics are translated to pixel space so that rendering for the points and curves are mapped to an [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement).  
+
+View the [comparison](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/comparison/) demo and the [main](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/main) demo. 
 
 ## Purpose
 
