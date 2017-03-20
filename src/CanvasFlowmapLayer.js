@@ -9,10 +9,13 @@ define([
   'esri/graphic',
   'esri/layers/GraphicsLayer',
   'esri/SpatialReference',
-  'esri/symbols/SimpleMarkerSymbol'
+  'esri/symbols/SimpleMarkerSymbol',
+
+  'https://cdnjs.cloudflare.com/ajax/libs/tween.js/16.6.0/Tween.min.js'
 ], function(
   declare, lang, domConstruct, on,
-  Color, Point, Graphic, GraphicsLayer, SpatialReference, SimpleMarkerSymbol
+  Color, Point, Graphic, GraphicsLayer, SpatialReference, SimpleMarkerSymbol,
+  TWEEN
 ) {
   return declare([GraphicsLayer], {
     constructor: function(options) {
@@ -118,7 +121,9 @@ define([
       this._listeners = [];
 
       // animation properties
-      this._offset = 0;
+      this._offset = {
+        val: 0.1
+      };
       this._resetOffset = 200;
       this._lineDashOffsetSize = this.animatePathProperties.symbol.lineDashOffsetSize;
       this._defaultEaseOutIncrementer = 0.2;
@@ -130,6 +135,18 @@ define([
       } else {
         // TODO: let developers define their own default this._incrementer value
       }
+
+      new TWEEN.Tween(this._offset)
+        .easing(TWEEN.Easing.Bounce.Out)
+        .to({
+          val: this._resetOffset
+        }, 3000)
+        .onUpdate(function() {
+          // console.log(this.val);
+        })
+        .repeat(Infinity)
+        // .yoyo(true)
+        .start();
     },
 
     /*
@@ -681,13 +698,13 @@ define([
       ctx.shadowBlur = symbolObject.shadowBlur;
       ctx.shadowColor = symbolObject.shadowColor;
       ctx.setLineDash([this._lineDashOffsetSize, this._lineDashOffsetSize + this._resetOffset]);
-      ctx.lineDashOffset = -this._offset; // this makes the dot appear to move when the entire top canvas is redrawn
+      ctx.lineDashOffset = -this._offset.val; // this makes the dot appear to move when the entire top canvas is redrawn
       ctx.moveTo(screenOriginPoint.x, screenOriginPoint.y);
       ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
     },
 
-    _animator: function() {
-      this._applyAnimator();
+    _animator: function(time) {
+      this._applyAnimator(time);
 
       var ctx = this._animationCanvasElement.getContext('2d');
       ctx.clearRect(0, 0, this._animationCanvasElement.width, this._animationCanvasElement.height);
@@ -695,7 +712,11 @@ define([
       this._animationFrameId = window.requestAnimationFrame(lang.hitch(this, '_animator'));
     },
 
-    _applyAnimator: function() {
+    _applyAnimator: function(time) {
+      TWEEN.update(time);
+
+      return;
+
       if (this.animationStyle === 'linear') {
         this._linearAnimator();
       } else if (this.animationStyle === 'ease-out') {
