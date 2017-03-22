@@ -27,8 +27,7 @@ require([
       //  - optional
       pathDisplayMode: 'selection', // 'selection' or 'all'
       wrapAroundCanvas: true,
-      animationStarted: true,
-      animationStyle: 'ease-out' // 'linear', 'ease-out', or 'ease-in'
+      animationStarted: true
     });
 
     map.addLayer(cityToCityLayer);

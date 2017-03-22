@@ -18,6 +18,7 @@ require([
   var oneToOneLayerButton = document.getElementById('oneToOneLayerButton');
   var pathAnimationButton = document.getElementById('pathAnimationButton');
   var pathAnimationStyleSelect = document.getElementById('pathAnimationStyleSelect');
+  var pathAnimationDurationInput = document.getElementById('pathAnimationDurationInput');
   var userInteractionSelect = document.getElementById('userInteractionSelect');
   var pathSelectionTypeSelect = document.getElementById('pathSelectionTypeSelect');
 
@@ -38,8 +39,7 @@ require([
       //  - optional
       pathDisplayMode: 'selection', // 'selection' or 'all'
       wrapAroundCanvas: true,
-      animationStarted: true,
-      animationStyle: 'ease-out' // 'linear', 'ease-out', or 'ease-in'
+      animationStarted: true
     });
 
     var manyToOneLayer = new CanvasFlowmapLayer({
@@ -48,8 +48,7 @@ require([
       originAndDestinationFieldIds: config.originAndDestinationFieldIds,
       pathDisplayMode: 'selection',
       wrapAroundCanvas: true,
-      animationStarted: true,
-      animationStyle: 'ease-out'
+      animationStarted: true
     });
 
     var oneToOneLayer = new CanvasFlowmapLayer({
@@ -58,8 +57,7 @@ require([
       originAndDestinationFieldIds: config.originAndDestinationFieldIds,
       pathDisplayMode: 'selection',
       wrapAroundCanvas: true,
-      animationStarted: true,
-      animationStyle: 'ease-out'
+      animationStarted: true
     });
 
     map.addLayers([oneToManyLayer, manyToOneLayer, oneToOneLayer]);
@@ -95,6 +93,26 @@ require([
         }
       });
     }
+
+    // populate animation easing options for select drop-down
+
+    var tweenEasingFamilies = oneToManyLayer.getAnimationEasingOptions();
+    Object.keys(tweenEasingFamilies).forEach(function(family) {
+      tweenEasingFamilies[family].types.forEach(function(type) {
+        var option = document.createElement('option');
+        option.value = family + ',' + type;
+        option.text = (type === 'None') ? family : (family + ', ' + type);
+
+        if (
+          family === oneToManyLayer.DEFAULT_ANIMATION_EASING_FAMILY &&
+          type === oneToManyLayer.DEFAULT_ANIMATION_EASING_TYPE
+        ) {
+          option.selected = true;
+        }
+
+        pathAnimationStyleSelect.add(option);
+      });
+    });
 
     // establish each layer's click and mouse-over handlers to demonstrate the flowmap functionality
     var clickListeners = [];
@@ -180,9 +198,19 @@ require([
     }
 
     pathAnimationStyleSelect.addEventListener('change', function(evt) {
-      oneToManyLayer.animationStyle = evt.target.value;
-      manyToOneLayer.animationStyle = evt.target.value;
-      oneToOneLayer.animationStyle = evt.target.value;
+      var optionValueToArray = evt.target.value.split(',');
+      var easingFamily = optionValueToArray[0];
+      var easingType = optionValueToArray[1];
+
+      oneToManyLayer.setAnimationEasing(easingFamily, easingType);
+      manyToOneLayer.setAnimationEasing(easingFamily, easingType);
+      oneToOneLayer.setAnimationEasing(easingFamily, easingType);
+    });
+
+    pathAnimationDurationInput.addEventListener('input', function(evt) {
+      oneToManyLayer.setAnimationDuration(evt.target.value);
+      manyToOneLayer.setAnimationDuration(evt.target.value);
+      oneToOneLayer.setAnimationDuration(evt.target.value);
     });
 
     // toggle click or mouse-over listeners as either paused or resumed

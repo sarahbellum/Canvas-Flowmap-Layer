@@ -18,14 +18,23 @@ define([
   TWEEN
 ) {
   return declare([GraphicsLayer], {
-    constructor: function(options) {
-      // PUBLIC properties and options
+    /*
+    CONSTANTS
+    */
+    DEFAULT_ANIMATION_EASING_FAMILY: 'Cubic',
+    DEFAULT_ANIMATION_EASING_TYPE: 'In',
+    DEFAULT_ANIMATION_DURATION: 2000,
 
-      // REQUIRED to be provided by the developer
+    constructor: function(options) {
+      /*
+      PUBLIC and REQUIRED properties provided by the developer
+      */
 
       this.originAndDestinationFieldIds = options.originAndDestinationFieldIds;
 
-      // OPTIONAL and not required to be provided by the developer
+      /*
+      PUBLIC and OPTIONAL properties provided by the developer
+      */
 
       // canvas symbol properties are based on Esri REST API simple renderer and unique value renderer specifications
       // http://resources.arcgis.com/en/help/arcgis-rest-api/#/Renderer_objects/02r30000019t000000/
@@ -109,9 +118,14 @@ define([
 
       this.animationStarted = options.hasOwnProperty('animationStarted') ? options.animationStarted : false; // Boolean
 
-      this.animationStyle = options.animationStyle || 'ease-out'; // valid values: 'linear', 'ease-out', or 'ease-in'
+      // NOTE: as a convenience, the following options can be passed in the constructor
+      //  - animationDuration
+      //  - animationEasingFamily
+      //  - animationEasingType
 
-      // PRIVATE properties for internal usage
+      /*
+      PRIVATE properties for internal usage -- NOT provided directly by the developer
+      */
 
       this._previousPanDelta = {
         x: 0,
@@ -120,32 +134,30 @@ define([
 
       this._listeners = [];
 
-      // animation properties
-      this._offset = {
-        val: 0.1
+      this._animationPropertiesStatic = {
+        offset: 0,
+        resetOffset: 200,
+        repeat: Infinity,
+        yoyo: false
       };
-      this._resetOffset = 200;
-      this._lineDashOffsetSize = this.animatePathProperties.symbol.lineDashOffsetSize;
-      this._defaultEaseOutIncrementer = 0.2;
-      this._defaultEaseInIncrementer = 0.1;
-      if (this.animationStyle === 'ease-out') {
-        this._incrementer = this._defaultEaseOutIncrementer;
-      } else if (this.animationStyle === 'ease-in') {
-        this._incrementer = this._defaultEaseInIncrementer;
-      } else {
-        // TODO: let developers define their own default this._incrementer value
-      }
 
-      new TWEEN.Tween(this._offset)
-        .easing(TWEEN.Easing.Bounce.Out)
+      this._animationPropertiesDynamic = {
+        duration: null,
+        easingInfo: null
+      },
+      // set this._animationPropertiesDynamic.duration value
+      this.setAnimationDuration(options.animationDuration);
+      // set this._animationPropertiesDynamic.easingInfo value
+      this.setAnimationEasing(options.animationEasingFamily, options.animationEasingType);
+
+      // initiate the active animation tween
+      this._animationTween = new TWEEN.Tween(this._animationPropertiesStatic)
         .to({
-          val: this._resetOffset
-        }, 3000)
-        .onUpdate(function() {
-          // console.log(this.val);
-        })
-        .repeat(Infinity)
-        // .yoyo(true)
+          offset: this._animationPropertiesStatic.resetOffset
+        }, this._animationPropertiesDynamic.duration)
+        .easing(this._animationPropertiesDynamic.easingInfo.tweenEasingFunction)
+        .repeat(this._animationPropertiesStatic.repeat)
+        .yoyo(this._animationPropertiesStatic.yoyo)
         .start();
     },
 
@@ -254,8 +266,68 @@ define([
       this._redrawCanvas();
     },
 
-    playAnimation: function(animationStyle) {
-      this.animationStyle = animationStyle || this.animationStyle;
+    setAnimationDuration: function(milliseconds) {
+      milliseconds = Number(milliseconds) || this.DEFAULT_ANIMATION_DURATION;
+
+      // change the tween duration on the active animation tween
+      if (this._animationTween) {
+        this._animationTween.to({
+          offset: this._animationPropertiesStatic.resetOffset
+        }, milliseconds);
+      }
+
+      this._animationPropertiesDynamic.duration = milliseconds;
+    },
+
+    setAnimationEasing: function(easingFamily, easingType) {
+      var tweenEasingFunction;
+      if (
+        TWEEN.Easing.hasOwnProperty(easingFamily) &&
+        TWEEN.Easing[easingFamily].hasOwnProperty(easingType)
+      ) {
+        tweenEasingFunction = TWEEN.Easing[easingFamily][easingType];
+      } else {
+        easingFamily = this.DEFAULT_ANIMATION_EASING_FAMILY;
+        easingType = this.DEFAULT_ANIMATION_EASING_TYPE;
+        tweenEasingFunction = TWEEN.Easing[easingFamily][easingType];
+      }
+
+      // change the tween easing function on the active animation tween
+      if (this._animationTween) {
+        this._animationTween.easing(tweenEasingFunction);
+      }
+
+      this._animationPropertiesDynamic.easingInfo = {
+        easingFamily: easingFamily,
+        easingType: easingType,
+        tweenEasingFunction: tweenEasingFunction
+      };
+    },
+
+    getAnimationEasingOptions: function(prettyPrint) {
+      var prettyPrint = !!prettyPrint;
+
+      var tweenEasingConsoleOptions = {};
+      var tweenEasingOptions = {};
+
+      Object.keys(TWEEN.Easing).forEach(function(family) {
+        tweenEasingConsoleOptions[family] = {
+          types: Object.keys(TWEEN.Easing[family]).join('", "')
+        };
+
+        tweenEasingOptions[family] = {
+          types: Object.keys(TWEEN.Easing[family])
+        };
+      });
+
+      if (prettyPrint) {
+        console.table(tweenEasingConsoleOptions);
+      }
+
+      return tweenEasingOptions;
+    },
+
+    playAnimation: function() {
       this.animationStarted = true;
       this._redrawCanvas();
     },
@@ -697,62 +769,20 @@ define([
       ctx.strokeStyle = symbolObject.strokeStyle;
       ctx.shadowBlur = symbolObject.shadowBlur;
       ctx.shadowColor = symbolObject.shadowColor;
-      ctx.setLineDash([this._lineDashOffsetSize, this._lineDashOffsetSize + this._resetOffset]);
-      ctx.lineDashOffset = -this._offset.val; // this makes the dot appear to move when the entire top canvas is redrawn
+      ctx.setLineDash([symbolObject.lineDashOffsetSize, symbolObject.lineDashOffsetSize + this._animationPropertiesStatic.resetOffset]);
+      ctx.lineDashOffset = -this._animationPropertiesStatic.offset; // this makes the dot appear to move when the entire top canvas is redrawn
       ctx.moveTo(screenOriginPoint.x, screenOriginPoint.y);
       ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
     },
 
     _animator: function(time) {
-      this._applyAnimator(time);
-
       var ctx = this._animationCanvasElement.getContext('2d');
       ctx.clearRect(0, 0, this._animationCanvasElement.width, this._animationCanvasElement.height);
       this._drawSelectedCanvasPaths(true, ctx); // draw it again to give the appearance of a moving dot with a new lineDashOffset
-      this._animationFrameId = window.requestAnimationFrame(lang.hitch(this, '_animator'));
-    },
 
-    _applyAnimator: function(time) {
       TWEEN.update(time);
 
-      return;
-
-      if (this.animationStyle === 'linear') {
-        this._linearAnimator();
-      } else if (this.animationStyle === 'ease-out') {
-        this._easeOutAnimator();
-      } else if (this.animationStyle === 'ease-in') {
-        this._easeInAnimator();
-      } else {
-        // TODO: let developers define their own animator function
-      }
-    },
-
-    _linearAnimator: function() {
-      // linear: constant rate animation
-      this._offset += 1;
-    },
-
-    _easeOutAnimator: function() {
-      // ease out with linear ending: start fast, slow down, and then remain constant
-      this._incrementer = this._incrementer < 1 ? this._incrementer + 0.009 : 1;
-      this._offset += (0.9 / this._incrementer);
-
-      if (this._offset > this._resetOffset) {
-        this._offset = 0;
-        this._incrementer = this._defaultEaseOutIncrementer;
-      }
-    },
-
-    _easeInAnimator: function() {
-      // ease in with linear ending: start slow, speed up, and then remain constant
-      this._incrementer = this._incrementer < 55 ? this._incrementer + 1 : this._incrementer;
-      this._offset += Math.pow(1.05, this._incrementer);
-
-      if (this._offset > this._resetOffset) {
-        this._offset = 0;
-        this._incrementer = this._defaultEaseInIncrementer;
-      }
+      this._animationFrameId = window.requestAnimationFrame(lang.hitch(this, '_animator'));
     },
 
     _wrapAroundCanvasPointGeometry: function(geometry) {
