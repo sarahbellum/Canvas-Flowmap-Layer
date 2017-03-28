@@ -769,7 +769,7 @@ define([
       ctx.strokeStyle = symbolObject.strokeStyle;
       ctx.shadowBlur = symbolObject.shadowBlur;
       ctx.shadowColor = symbolObject.shadowColor;
-      ctx.setLineDash([symbolObject.lineDashOffsetSize, symbolObject.lineDashOffsetSize + this._animationPropertiesStatic.resetOffset]);
+      ctx.setLineDash([symbolObject.lineDashOffsetSize, (this._animationPropertiesStatic.resetOffset - symbolObject.lineDashOffsetSize)]);
       ctx.lineDashOffset = -this._animationPropertiesStatic.offset; // this makes the dot appear to move when the entire top canvas is redrawn
       ctx.moveTo(screenOriginPoint.x, screenOriginPoint.y);
       ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
