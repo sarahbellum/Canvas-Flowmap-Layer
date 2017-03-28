@@ -11,11 +11,11 @@ define([
   'esri/SpatialReference',
   'esri/symbols/SimpleMarkerSymbol',
 
-  'https://cdnjs.cloudflare.com/ajax/libs/tween.js/16.6.0/Tween.min.js'
+  '//cdnjs.cloudflare.com/ajax/libs/tween.js/16.6.0/Tween.min.js'
 ], function(
   declare, lang, domConstruct, on,
   Color, Point, Graphic, GraphicsLayer, SpatialReference, SimpleMarkerSymbol,
-  TWEEN
+  Tween
 ) {
   return declare([GraphicsLayer], {
     /*
@@ -151,7 +151,7 @@ define([
       this.setAnimationEasing(options.animationEasingFamily, options.animationEasingType);
 
       // initiate the active animation tween
-      this._animationTween = new TWEEN.Tween(this._animationPropertiesStatic)
+      this._animationTween = new Tween.Tween(this._animationPropertiesStatic)
         .to({
           offset: this._animationPropertiesStatic.resetOffset
         }, this._animationPropertiesDynamic.duration)
@@ -282,14 +282,14 @@ define([
     setAnimationEasing: function(easingFamily, easingType) {
       var tweenEasingFunction;
       if (
-        TWEEN.Easing.hasOwnProperty(easingFamily) &&
-        TWEEN.Easing[easingFamily].hasOwnProperty(easingType)
+        Tween.Easing.hasOwnProperty(easingFamily) &&
+        Tween.Easing[easingFamily].hasOwnProperty(easingType)
       ) {
-        tweenEasingFunction = TWEEN.Easing[easingFamily][easingType];
+        tweenEasingFunction = Tween.Easing[easingFamily][easingType];
       } else {
         easingFamily = this.DEFAULT_ANIMATION_EASING_FAMILY;
         easingType = this.DEFAULT_ANIMATION_EASING_TYPE;
-        tweenEasingFunction = TWEEN.Easing[easingFamily][easingType];
+        tweenEasingFunction = Tween.Easing[easingFamily][easingType];
       }
 
       // change the tween easing function on the active animation tween
@@ -310,13 +310,13 @@ define([
       var tweenEasingConsoleOptions = {};
       var tweenEasingOptions = {};
 
-      Object.keys(TWEEN.Easing).forEach(function(family) {
+      Object.keys(Tween.Easing).forEach(function(family) {
         tweenEasingConsoleOptions[family] = {
-          types: Object.keys(TWEEN.Easing[family]).join('", "')
+          types: Object.keys(Tween.Easing[family]).join('", "')
         };
 
         tweenEasingOptions[family] = {
-          types: Object.keys(TWEEN.Easing[family])
+          types: Object.keys(Tween.Easing[family])
         };
       });
 
@@ -780,7 +780,7 @@ define([
       ctx.clearRect(0, 0, this._animationCanvasElement.width, this._animationCanvasElement.height);
       this._drawSelectedCanvasPaths(true, ctx); // draw it again to give the appearance of a moving dot with a new lineDashOffset
 
-      TWEEN.update(time);
+      Tween.update(time);
 
       this._animationFrameId = window.requestAnimationFrame(lang.hitch(this, '_animator'));
     },
