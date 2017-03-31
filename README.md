@@ -2,7 +2,7 @@
 
 The Canvas-Flowmap-Layer extends the ArcGIS API for JavaScript (Esri JSAPI) to map the flow of objects from an origin point to a destination point by using a Bezier curve. Esri graphics are translated to pixel space so that rendering for the points and curves are mapped to an [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement).  
 
-View the [comparison](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/comparison/) demo and the [main](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/main) demo. 
+View the [comparison](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/comparison/) demo and the [main](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/main) demo.
 
 ## Purpose
 
@@ -18,7 +18,9 @@ Flow mapping is a cartographic necessity, yet still lacks empirical design rules
 
 ## Line Animation
 
-The convexity or concavity of the curve *does* convey the direction of the flow line, but the directionality won't be easily intuited due to its novelty. In the event that this mapping technique catches like :fire: wildfire :fire:, we can delete the second part of the previous sentence. In the mean time, we've added line animations, similar to the  "ants marching" effect, with a nice easing effect inspired by [this Kirupa post](https://www.kirupa.com/html5/introduction_to_easing_in_javascript.htm). The Canvas-Flowmap-Layer uses two separate lines when animation is added, although using two lines is not required to achieve animation. The first line is the solid static Bezier curve, and the second line is the dotted or hashed *animated* Bezier curve that sits on top of the first line.
+The convexity or concavity of the curve *does* convey the direction of the flow line, but the directionality won't be easily intuited due to its novelty. In the event that this mapping technique catches like :fire: wildfire :fire:, we can delete the second part of the previous sentence. In the mean time, we've added line animations, similar to the  "ants marching" effect, but with many nice easing effects inspired by both the [tween.js library](https://github.com/tweenjs/tween.js) and this [Kirupa post](https://www.kirupa.com/html5/introduction_to_easing_in_javascript.htm).
+
+The Canvas-Flowmap-Layer uses two separate lines when animation is added, although using two lines is not required to achieve animation. The first line is the solid, static Bezier curve, and the second line is the dotted or hashed *animated* Bezier curve that sits on top of the static line.
 
 ![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowmap-Layer/master/img/lineanimation.gif)
 
@@ -46,7 +48,7 @@ In the csv file for the one-to-one data relationship, each origin exists on one 
 
 ### Animation
 
-The animation property options provided are linear, ease-out, and ease-in. The default `animationStyle` can be changed, and the properties for the animation styles are changed with the `animatePathProperties`.
+The animations rely on the [tween.js library](https://github.com/tweenjs/tween.js) to assist with changing the underlying line property values as well as providing many different easing functions and durations. See the `setAnimationDuration()` and `setAnimationEasing()` method descriptions below for more information.
 
 ### Interaction
 
@@ -84,7 +86,9 @@ var canvasFlowmapLayer = new CanvasFlowmapLayer({
   // - some optional properties
   pathDisplayMode: 'selection',
   animationStarted: true,
-  animationStyle: 'ease-out'
+  animationDuration: 2000,
+  animationEasingFamily: 'Cubic',
+  animationEasingType: 'In'
 });
 
 // construct an array of esri/Graphic yourself and add them to the layer
@@ -93,6 +97,15 @@ canvasFlowmapLayer.addGraphics([pointGraphic1, pointGraphic2, ..., pointGraphic1
 // add the layer to your JSAPI map
 map.addLayer(canvasFlowmapLayer);
 ```
+
+##### Convenience options available in constructor _only_:
+
+| Property | Description |
+| --- | --- |
+| `animationDuration` | See `setAnimationDuration()` method description below. |
+| `animationEasingFamily` | See `setAnimationEasing()` method description below. |
+| `animationEasingType` | See `setAnimationEasing()` method description below. |
+
 
 ### Property Summary
 
@@ -106,14 +119,14 @@ map.addLayer(canvasFlowmapLayer);
 | `pathDisplayMode` | _Optional_. `String`. Valid values: `'selection'` or `'all'`. Defaults to `'all'`. |
 | `wrapAroundCanvas` | _Optional_. `Boolean`. Defaults to `true`. Ensures that canvas features will be drawn beyond +/-180 longitude. |
 | `animationStarted` | _Optional_. `Boolean`. Defaults to `false`. This can be set during construction, but you should use the `playAnimation` and `stopAnimation` methods to control and change animations after layer construction. |
-| `animationStyle` | _Optional_. `String`. Valid values: `'linear'`, `'ease-out'`, or `'ease-in'` Defaults to `'ease-out'`. |
 | `originHighlightCircleProperties` | _Optional_. `Object`. This object defines the symbol properties of the origin point as rendered on the canvas when highlighted. |
 | `destinationHighlightCircleProperties` | _Optional_. `Object`. This object defines the symbol properties of the destination point as rendered on the canvas when highlighted. |
 
-##### `originAndDestinationFieldIds` example
+##### `originAndDestinationFieldIds` example:
 
 ```javascript
-// you must fill in each of these values for these required properties, using the schema of your own data
+// you must fill in each of these values for these required properties,
+// using the schema of your own data
 {
   originUniqueIdField: 'start_id',
   originGeometry: {
@@ -142,8 +155,11 @@ map.addLayer(canvasFlowmapLayer);
 | `selectGraphicsForPathDisplay( selectionGraphics, selectionMode )`  | `selectionGraphics`: `Array` of Esri graphics that were already added to the layer. <br/> <br/> `selectionMode`: `String`. Valid values: `'SELECTION_NEW'`, `'SELECTION_ADD'`, or `'SELECTION_SUBTRACT'`. | This informs the layer which Bezier curves should be drawn on the map. <br/><br/> For example, you can most easily use this in conjunction with a `click` or `mouse-over` event listener. |
 | `selectGraphicsForPathDisplayById( uniqueOriginOrDestinationIdField, idValue, originBoolean, selectionMode )` |  | This is a convenience method if the unique origin or destination value is already known and you do not wish to rely on a `click` or `mouse-over` event listener. |
 | `clearAllPathSelections()` |  | This informs the layer to unselect (and thus hide) all Bezier curves. |
-| `playAnimation( animationStyle )` | `animationStyle`: _Optional_. `String`. Valid values if you want to also change the animation style: `linear`, `ease-out`, or `ease-in`. | This starts and shows Bezier curve animations and also provides the opportunity to change the animation style. |
+| `playAnimation()` |  | This starts and shows Bezier curve animations. |
 | `stopAnimation()` |  | This stops and hides any Bezier curve animations. |
+| `setAnimationDuration( duration )` | `duration`: _Optional_. `Number` in milliseconds. | This changes the animation duration. |
+| `setAnimationEasing( easingFamily, easingType )` | `easingFamily`: `String`. <br/><br/> `easingType`: `String`. <br/><br/> See `getAnimationEasingOptions()` method() for info on valid values. | This changes the animation easing function with the help of the [tween.js library](https://github.com/tweenjs/tween.js). |
+| `getAnimationEasingOptions()` |  | Returns information on valid `easingFamily` and `easingType` values based on the [tween.js library](https://github.com/tweenjs/tween.js). |
 | `selectGraphicsForHighlight( selectionGraphics, selectionMode )` | `selectionGraphics`: `Array` of Esri graphics that were already added to the layer. <br/><br/> `selectionMode`: `String`. Valid values: `'SELECTION_NEW'`, `'SELECTION_ADD'`, or `'SELECTION_SUBTRACT'`. | This informs the layer which origin/destination points should be "highlighted" when drawn on the map, which just applies the highlight symbology instead of the default symbology to the points. <br/><br/> For example, you can most easily use this in conjunction with a `click` or `mouse-over` event listener. |
 | `clearAllHighlightSelections()` |  | This informs the layer to "un-highlight" (and thus remove highlight symbology) all Bezier curves. |
 

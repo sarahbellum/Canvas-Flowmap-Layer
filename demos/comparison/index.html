@@ -86,21 +86,16 @@
         </div>
 
         <div style="display: flex; align-items: flex-end; justify-content: space-between;">
-          <button class="btn btn-small btn-clear btn-half" id="pathAnimationButton" style="width: 47% ;">
+          <button class="btn btn-small btn-clear btn-half" id="pathAnimationButton" style="width: 49% ;">
             <i class="icon-ui-pause icon-ui-red"></i>
             Toggle
           </button>
-          <select class="" id="pathAnimationStyleSelect" style="height: 2.1rem; width: 49%;">
-            <option value="linear" title="constant rate animation">
-              Linear
-            </option>
-            <option value="ease-out" title="start fast, slow down, and then remain constant" selected>
-              Ease-out
-            </option>
-            <option value="ease-in" title="start slow, speed up, and then remain constant">
-              Ease-in
-            </option>
-          </select>
+          <select id="pathAnimationStyleSelect" style="height: 2.1rem; width: 49%;"></select>
+        </div>
+
+        <div>
+            <input id="pathAnimationDurationInput" type="number" min="100" step="100" value="2000" style="height: 2.1rem; width: 49%; display: inline-block" />
+            <span class="font-size--2" style="margin-left: 5px;">duration (ms)</span>
         </div>
 
         <div class="leader-1 font-size--2">
@@ -116,7 +111,7 @@
               Mouse-over
             </option>
           </select>
-          <select class="" id="pathSelectionTypeSelect" style="height: 2.1rem; width: 47%;">
+          <select class="" id="pathSelectionTypeSelect" style="height: 2.1rem; width: 49%;">
             <option value="SELECTION_NEW" title="new selection" selected>
               New
             </option>
