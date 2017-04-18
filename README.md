@@ -2,7 +2,24 @@
 
 The Canvas-Flowmap-Layer extends the ArcGIS API for JavaScript (Esri JSAPI) to map the flow of objects from an origin point to a destination point by using a Bezier curve. Esri graphics are translated to pixel space so that rendering for the points and curves are mapped to an [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement).  
 
-View the [comparison](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/comparison/) demo and the [main](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/main) demo.
+**Demos:** View the [comparison "sandbox"](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/comparison/) demo and the [main](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/main) demo.
+
+**Table of Contents**
+- [Purpose](#purpose)
+- [Line Animation](#line-animation)
+- [Features and Info for Cartographers and Developers](#features-and-info-for-cartographers-and-developers)
+  - [Data Relationships](#data-relationships)
+    - [one-to-many](#one-to-many)
+    - [many-to-one](#many-to-one)
+    - [one-to-one](#one-to-one)
+  - [Animation](#animation)
+  - [Interaction](#interaction)
+  - [Symbology](#symbology)
+- [API](#api)
+  - [Constructor Summary](#constructor-summary)
+  - [Property Summary](#property-summary)
+  - [Method Summary](#method-summary)
+  - [Event Summary](#event-summary)
 
 ## Purpose
 
@@ -24,7 +41,7 @@ The Canvas-Flowmap-Layer uses two separate lines when animation is added, althou
 
 ![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowmap-Layer/master/img/lineanimation.gif)
 
-## Options and More Information for Developers
+## Features and Info for Cartographers and Developers
 
 ### Data Relationships
 
