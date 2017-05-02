@@ -144,7 +144,7 @@ define([
       this._animationPropertiesDynamic = {
         duration: null,
         easingInfo: null
-      },
+      };
       // set this._animationPropertiesDynamic.duration value
       this.setAnimationDuration(options.animationDuration);
       // set this._animationPropertiesDynamic.easingInfo value
@@ -305,8 +305,6 @@ define([
     },
 
     getAnimationEasingOptions: function(prettyPrint) {
-      var prettyPrint = !!prettyPrint;
-
       var tweenEasingConsoleOptions = {};
       var tweenEasingOptions = {};
 
@@ -320,7 +318,7 @@ define([
         };
       });
 
-      if (prettyPrint) {
+      if (!!prettyPrint) {
         console.table(tweenEasingConsoleOptions);
       }
 
@@ -663,8 +661,10 @@ define([
         // get the canvas symbol properties
         var symbol = this._getSymbolProperties(graphic, canvasCircleProperties);
         // draw a circle point on the canvas
-
+        ctx.beginPath();
         this._applyCanvasPointSymbol(ctx, symbol, screenPoint);
+        ctx.stroke();
+        ctx.closePath();
       }, this);
     },
 
@@ -701,18 +701,18 @@ define([
       ctx.lineWidth = symbolObject.lineWidth;
       ctx.strokeStyle = symbolObject.strokeStyle;
       ctx.shadowBlur = symbolObject.shadowBlur;
-      ctx.beginPath();
       ctx.arc(screenPoint.x, screenPoint.y, symbolObject.radius, 0, 2 * Math.PI, false);
       ctx.fill();
-      ctx.stroke();
-      ctx.closePath();
     },
 
     _drawSelectedCanvasPaths: function(animate, ctx) {
       if (!ctx) {
         ctx = animate ? this._animationCanvasElement.getContext('2d') : this._canvasElement.getContext('2d');
       }
-      ctx.beginPath();
+
+      if (animate) {
+        ctx.beginPath();
+      }
 
       var originAndDestinationFieldIds = this.originAndDestinationFieldIds;
 
@@ -741,16 +741,21 @@ define([
           var symbol;
           if (animate) {
             symbol = this._getSymbolProperties(graphic, this.animatePathProperties);
-            this._animateCanvasLineSymbol(ctx, symbol, screenOriginPoint, screenDestinationPoint);
+            this._applyAnimatedCanvasLineSymbol(ctx, symbol, screenOriginPoint, screenDestinationPoint);
           } else {
             symbol = this._getSymbolProperties(graphic, this.pathProperties);
+            ctx.beginPath();
             this._applyCanvasLineSymbol(ctx, symbol, screenOriginPoint, screenDestinationPoint);
+            ctx.stroke();
+            ctx.closePath();
           }
         }
       }, this);
 
-      ctx.stroke();
-      ctx.closePath();
+      if (animate) {
+        ctx.stroke();
+        ctx.closePath();
+      }
     },
 
     _applyCanvasLineSymbol: function(ctx, symbolObject, screenOriginPoint, screenDestinationPoint) {
@@ -763,7 +768,7 @@ define([
       ctx.bezierCurveTo(screenOriginPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y, screenDestinationPoint.x, screenDestinationPoint.y);
     },
 
-    _animateCanvasLineSymbol: function(ctx, symbolObject, screenOriginPoint, screenDestinationPoint) {
+    _applyAnimatedCanvasLineSymbol: function(ctx, symbolObject, screenOriginPoint, screenDestinationPoint) {
       ctx.lineCap = symbolObject.lineCap;
       ctx.lineWidth = symbolObject.lineWidth;
       ctx.strokeStyle = symbolObject.strokeStyle;
