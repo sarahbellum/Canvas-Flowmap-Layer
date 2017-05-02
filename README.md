@@ -20,6 +20,7 @@ The Canvas-Flowmap-Layer extends the ArcGIS API for JavaScript (Esri JSAPI) to m
   - [Property Summary](#property-summary)
   - [Method Summary](#method-summary)
   - [Event Summary](#event-summary)
+- [Licensing](#licensing)
 
 ## Purpose
 
@@ -186,3 +187,6 @@ map.addLayer(canvasFlowmapLayer);
 | --- | --- |
 | `click` | Extends [GraphicsLayer `click`](https://developers.arcgis.com/javascript/3/jsapi/graphicslayer-amd.html#event-click) and adds the following properties to the event object: <br/><br/> `isOriginGraphic`: `true` if an origin graphic has been clicked, but `false` if a destination graphic has been clicked. <br/><br/> `sharedOriginGraphics`: `Array` of Esri graphics that share the same origin. <br/><br/> `sharedDestinationGraphics`: `Array` of Esri graphics that share the same destination. |
 | `mouse-over` | Extends [GraphicsLayer `mouse-over`](https://developers.arcgis.com/javascript/3/jsapi/graphicslayer-amd.html#event-mouse-over) and adds the following properties to the event object: <br/><br/> `isOriginGraphic`: `true` when the mouse first entered an origin graphic, but `false` when the mouse first entered a destination graphic. <br/><br/> `sharedOriginGraphics`: `Array` of Esri graphics that share the same origin. <br/><br/> `sharedDestinationGraphics`: `Array` of Esri graphics that share the same destination. |
+
+## Licensing
+A copy of the license is available in the repository's [LICENSE](./LICENSE) file.
