@@ -2,9 +2,17 @@
 
 The Canvas-Flowmap-Layer extends the ArcGIS API for JavaScript (Esri JSAPI) to map the flow of objects from an origin point to a destination point by using a Bezier curve. Esri graphics are translated to pixel space so that rendering for the points and curves are mapped to an [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement).  
 
-**Demos:** View the [comparison "sandbox"](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/comparison/) demo and the [main](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/main) demo.
+**Demos** 
+
+- [Simple](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/main)
+- [Feature comparison](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/comparison/) (aka: kitchen sink, sandbox)
+
+**Important!**
+
+There is also a LeafletJS version of this layer plugin available at [jwasilgeo/Leaflet.Canvas-Flowmap-Layer](https://www.github.com/jwasilgeo/Leaflet.Canvas-Flowmap-Layer). You can also read about it in [this blog post announcement](https://cerebellumaps.wordpress.com/2017/04/20/flow-mapping-with-leaflet/).
 
 **Table of Contents**
+
 - [Purpose](#purpose)
 - [Line Animation](#line-animation)
 - [Features and Info for Cartographers and Developers](#features-and-info-for-cartographers-and-developers)
