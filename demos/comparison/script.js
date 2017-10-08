@@ -2,14 +2,12 @@ require([
   'Canvas-Flowmap-Layer/CanvasFlowmapLayer',
   'esri/graphic',
   'esri/map',
-  'local-resources/config',
   'dojo/on',
   'dojo/domReady!'
 ], function(
   CanvasFlowmapLayer,
   Graphic,
   Map,
-  config,
   on
 ) {
   // establish references to form elements in the controls card
@@ -35,9 +33,26 @@ require([
       visible: true,
       // CanvasFlowmapLayer custom constructor properties
       //  - required
-      originAndDestinationFieldIds: config.originAndDestinationFieldIds,
+      originAndDestinationFieldIds: {
+        originUniqueIdField: 's_city_id',
+        originGeometry: {
+          x: 's_lon',
+          y: 's_lat',
+          spatialReference: {
+            wkid: 4326
+          }
+        },
+        destinationUniqueIdField: 'e_city_id',
+        destinationGeometry: {
+          x: 'e_lon',
+          y: 'e_lat',
+          spatialReference: {
+            wkid: 4326
+          }
+        }
+      },
       //  - optional
-      pathDisplayMode: 'selection', // 'selection' or 'all'
+      pathDisplayMode: 'selection',
       wrapAroundCanvas: true,
       animationStarted: true
     });
@@ -45,7 +60,24 @@ require([
     var manyToOneLayer = new CanvasFlowmapLayer({
       id: 'manyToOneLayer',
       visible: false,
-      originAndDestinationFieldIds: config.originAndDestinationFieldIds,
+      originAndDestinationFieldIds: {
+        originUniqueIdField: 's_city_id',
+        originGeometry: {
+          x: 's_lon',
+          y: 's_lat',
+          spatialReference: {
+            wkid: 4326
+          }
+        },
+        destinationUniqueIdField: 'e_city_id',
+        destinationGeometry: {
+          x: 'e_lon',
+          y: 'e_lat',
+          spatialReference: {
+            wkid: 4326
+          }
+        }
+      },
       pathDisplayMode: 'selection',
       wrapAroundCanvas: true,
       animationStarted: true
@@ -54,7 +86,24 @@ require([
     var oneToOneLayer = new CanvasFlowmapLayer({
       id: 'oneToOneLayer',
       visible: false,
-      originAndDestinationFieldIds: config.originAndDestinationFieldIds,
+      originAndDestinationFieldIds: {
+        originUniqueIdField: 's_city_id',
+        originGeometry: {
+          x: 's_lon',
+          y: 's_lat',
+          spatialReference: {
+            wkid: 4326
+          }
+        },
+        destinationUniqueIdField: 'e_city_id',
+        destinationGeometry: {
+          x: 'e_lon',
+          y: 'e_lat',
+          spatialReference: {
+            wkid: 4326
+          }
+        }
+      },
       pathDisplayMode: 'selection',
       wrapAroundCanvas: true,
       animationStarted: true

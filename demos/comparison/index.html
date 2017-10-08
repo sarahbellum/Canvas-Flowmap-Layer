@@ -5,10 +5,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
   <meta name="description" content="Canvas Flowmap Layer with the Esri ArcGIS API for JavaScript v3.">
+  
   <title>Canvas Flowmap Layer with JSAPI v3</title>
-  <link rel="stylesheet" href="//js.arcgis.com/3.20/esri/themes/calcite/esri/esri.css">
-  <link rel="stylesheet" href="//s3-us-west-1.amazonaws.com/patterns.esri.com/files/calcite-web/1.0.0-rc.1/css/calcite-web.min.css">
-
+  
+  <link rel="stylesheet" href="https://js.arcgis.com/3.22/esri/themes/calcite/esri/esri.css">
+  
+  <link rel="stylesheet" href="https://s3-us-west-1.amazonaws.com/patterns.esri.com/files/calcite-web/1.0.0-rc.7/css/calcite-web.min.css">
+  
   <style>
     html,
     body,
@@ -130,17 +133,13 @@
 
 
   <!-- load 3rd-party CSV parsing libary  -->
-  <script src="//unpkg.com/papaparse/papaparse.min.js"></script>
+  <script src="https://unpkg.com/papaparse@4/papaparse.min.js"></script>
 
   <!-- set Dojo configuration options -->
   <script>
     var dojoConfig = {
       async: true,
-      debug: true, // only for development
       packages: [{
-        name: 'local-resources',
-        location: location.pathname.replace(/\/[^/]+$/, '')
-      }, {
         name: 'Canvas-Flowmap-Layer',
         location: location.pathname.replace(/[^\/]+$/, '') + '../../src'
       }]
@@ -148,7 +147,7 @@
 
   </script>
   <!-- load Esri JSAPI -->
-  <script src="//js.arcgis.com/3.20compact/"></script>
+  <script src="https://js.arcgis.com/3.22compact/"></script>
 
   <!-- load this app's code -->
   <script src="script.js"></script>

@@ -2,13 +2,11 @@ require([
   'Canvas-Flowmap-Layer/CanvasFlowmapLayer',
   'esri/graphic',
   'esri/map',
-  'local-resources/config',
   'dojo/domReady!'
 ], function(
   CanvasFlowmapLayer,
   Graphic,
-  Map,
-  config
+  Map
 ) {
   var map = new Map('map', {
     basemap: 'dark-gray-vector',
@@ -23,9 +21,26 @@ require([
       visible: true,
       // CanvasFlowmapLayer custom constructor properties
       //  - required
-      originAndDestinationFieldIds: config.originAndDestinationFieldIds,
+      originAndDestinationFieldIds: {
+        originUniqueIdField: 's_city_id',
+        originGeometry: {
+          x: 's_lon',
+          y: 's_lat',
+          spatialReference: {
+            wkid: 4326
+          }
+        },
+        destinationUniqueIdField: 'e_city_id',
+        destinationGeometry: {
+          x: 'e_lon',
+          y: 'e_lat',
+          spatialReference: {
+            wkid: 4326
+          }
+        }
+      },
       //  - optional
-      pathDisplayMode: 'selection', // 'selection' or 'all'
+      pathDisplayMode: 'selection',
       wrapAroundCanvas: true,
       animationStarted: true
     });
@@ -55,6 +70,10 @@ require([
 
         // add all graphics to the canvas flowmap layer
         cityToCityLayer.addGraphics(csvGraphics);
+
+        // automatically select some graphics for path display to demonstrate the flowmap functionality,
+        // without the user having to first click on the layer
+        cityToCityLayer.selectGraphicsForPathDisplayById('s_city_id', 562, true, 'SELECTION_NEW');
       }
     });
 

@@ -8,7 +8,8 @@
 
   <title>Canvas Flowmap Layer with JSAPI v3</title>
 
-  <link rel="stylesheet" href="//js.arcgis.com/3.20/esri/themes/calcite/esri/esri.css">
+  <link rel="stylesheet" href="https://js.arcgis.com/3.22/esri/themes/calcite/esri/esri.css">
+
   <style>
     html,
     body,
@@ -24,23 +25,22 @@
   <div id="map"></div>
 
   <!-- load 3rd-party CSV parsing libary  -->
-  <script src="//unpkg.com/papaparse/papaparse.min.js"></script>
+  <script src="https://unpkg.com/papaparse@4/papaparse.min.js"></script>
+
   <!-- set Dojo configuration options -->
   <script>
     var dojoConfig = {
       async: true,
-      debug: true, // only for development
       packages: [{
-        name: 'local-resources',
-        location: location.pathname.replace(/\/[^/]+$/, '')
-      }, {
         name: 'Canvas-Flowmap-Layer',
         location: location.pathname.replace(/[^\/]+$/, '') + '../../src'
       }]
     };
   </script>
+
   <!-- load Esri JSAPI -->
-  <script src="//js.arcgis.com/3.20compact/"></script>
+  <script src="https://js.arcgis.com/3.22compact/"></script>
+
   <!-- load this app's code -->
   <script src="script.js"></script>
 </body>

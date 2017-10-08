@@ -1,6 +1,6 @@
 # Canvas-Flowmap-Layer
 
-The Canvas-Flowmap-Layer extends the ArcGIS API for JavaScript (Esri JSAPI) to map the flow of objects from an origin point to a destination point by using a Bezier curve. Esri graphics are translated to pixel space so that rendering for the points and curves are mapped to an [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement).  
+The Canvas-Flowmap-Layer extends the ArcGIS API for JavaScript v3.x (Esri JSAPI) to map the flow of objects from an origin point to a destination point by using a Bezier curve. Esri graphics are translated to pixel space so that rendering for the points and curves are mapped to an [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement).  
 
 **Demos** 
 
@@ -88,11 +88,11 @@ The Canvas-Flowmap-Layer has default symbology established for origin points, de
 
 Symbol configurations are defined using property objects inspired by the [ArcGIS REST API renderer objects ](http://resources.arcgis.com/en/help/arcgis-rest-api/#/Renderer_objects/02r30000019t000000/) specification. Simple, unique value, and class breaks are all supported but instead use canvas stroke and line style property names.
 
-The provided demo pages show some examples of these symbol configuration objects (see config.js files).
+The [custom symbology examples](#custom-symbology-examples) in the API documentation below provide a starting point on how some of these configuration objects should be structured.
 
 ## API
 
-This extends the ArcGIS API for JavaScript (v3.x) [esri/layers/GraphicsLayer](https://developers.arcgis.com/javascript/3/jsapi/graphicslayer-amd.html). All properties, methods, and events provided by the `GraphicsLayer` are available in the `CanvasFlowmapLayer`, with custom features described below.
+This extends the ArcGIS API for JavaScript v3.x [esri/layers/GraphicsLayer](https://developers.arcgis.com/javascript/3/jsapi/graphicslayer-amd.html). All properties, methods, and events provided by the `GraphicsLayer` are available in the `CanvasFlowmapLayer`, with custom features described below.
 
 ### Constructor Summary
 
@@ -105,9 +105,9 @@ var canvasFlowmapLayer = new CanvasFlowmapLayer({
 
   // CanvasFlowmapLayer custom constructor properties -- see property table below
 
-  // - required property
-  //that informs the layer of your unique origin/destination attributes and geometry
-  originAndDestinationFieldIds: {/* all kinds of important stuff here...see docs below */},
+  // - a required property
+  // it informs the layer of your unique origin/destination attributes and geometry
+  originAndDestinationFieldIds: { /* all kinds of important stuff here...see docs below */ },
 
   // - some optional properties
   pathDisplayMode: 'selection',
@@ -172,6 +172,107 @@ map.addLayer(canvasFlowmapLayer);
   }
 }
 ```
+
+##### custom symbology examples:
+
+<details>
+  <summary>
+    `destinationCircleProperties` example to set categorical (unique values) symbols for destination circle strokes and fills
+  </summary>
+
+```javascript
+destinationCircleProperties: {
+  type: 'uniqueValue',
+  field: '<field / column / property name>',
+  uniqueValueInfos: [{
+    value: '<attribute value A>',
+    symbol: {
+      globalCompositeOperation: 'destination-over',
+      radius: 10,
+      fillStyle: 'rgba(87, 216, 255, 0.65)',
+      lineWidth: 0.5,
+      strokeStyle: 'rgb(61, 225, 255)',
+      shadowBlur: 0
+    }
+  }, {
+    value: '<attribute value B>',
+    symbol: {
+      globalCompositeOperation: 'destination-over',
+      radius: 8,
+      fillStyle: 'rgba(153, 98, 204, 0.70)',
+      lineWidth: 0.5,
+      strokeStyle: 'rgb(181, 131, 217)',
+      shadowBlur: 0
+    }
+  }]
+}
+```
+
+</details>
+
+<details>
+  <summary>
+    `pathProperties` example to set a simple (single) symbol for line width and color
+  </summary>
+
+```javascript
+pathProperties: {
+  type: 'simple',
+  symbol: {
+    strokeStyle: 'rgba(207, 241, 17, 0.8)',
+    shadowBlur: 1.5,
+    lineWidth: 0.5,
+    shadowColor: 'rgb(207, 241, 17)',
+    lineCap: 'round'
+  }
+}
+```
+
+</details>
+
+<details>
+  <summary>
+    `pathProperties` example to set class break symbols for line widths and colors
+  </summary>
+
+```javascript
+pathProperties: {
+  type: 'classBreaks',
+  field: '<field / column / property name>',
+  defaultSymbol: {
+    strokeStyle: 'rgba(237, 248, 177, 1)',
+    lineWidth: 0.5,
+    lineCap: 'round'
+  },
+  classBreakInfos: [{
+    classMinValue: 0,
+    classMaxValue: 999999,
+    symbol: {
+      strokeStyle: 'rgba(237, 248, 177, 1)',
+      lineWidth: 0.5,
+      lineCap: 'round'
+    }
+  }, {
+    classMinValue: 999999,
+    classMaxValue: 4999999,
+    symbol: {
+      strokeStyle: 'rgba(127, 205, 187, 1)',
+      lineWidth: 1.5,
+      lineCap: 'round'
+    }
+  }, {
+    classMinValue: 5000000,
+    classMaxValue: 10000000,
+    symbol: {
+      strokeStyle: 'rgba(44, 127, 184, 1)',
+      lineWidth: 3,
+      lineCap: 'round'
+    }
+  }]
+}
+```
+
+</details>
 
 ### Method Summary
 
