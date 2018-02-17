@@ -11,6 +11,8 @@ The Canvas-Flowmap-Layer extends the ArcGIS API for JavaScript v3.x (Esri JSAPI)
 
 There is also a LeafletJS version of this layer plugin available at [jwasilgeo/Leaflet.Canvas-Flowmap-Layer](https://www.github.com/jwasilgeo/Leaflet.Canvas-Flowmap-Layer). You can also read about it in [this blog post announcement](https://cerebellumaps.wordpress.com/2017/04/20/flow-mapping-with-leaflet/).
 
+View our [**presentation at NACIS 2017**](https://www.youtube.com/watch?v=cRPx-BfBtv0).
+
 **Table of Contents**
 
 - [Purpose](#purpose)
