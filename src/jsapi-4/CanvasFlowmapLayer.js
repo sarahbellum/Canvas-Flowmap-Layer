@@ -1,9 +1,13 @@
 define([
   'esri/layers/Layer',
-  'esri/views/2d/layers/BaseLayerView2D'
+  'esri/views/2d/layers/BaseLayerView2D',
+  'esri/geometry/Point',
+  'esri/geometry/support/webMercatorUtils'
 ], function(
   Layer,
-  BaseLayerView2D
+  BaseLayerView2D,
+  Point,
+  webMercatorUtils
 ) {
   var CustomLayerView = BaseLayerView2D.createSubclass({
     attach: function() {
@@ -23,7 +27,7 @@ define([
       var source = {
         width: width,
         height: height,
-        view: this.view,
+        // view: this.view,
         graphics: this.layer.graphics,
         originAndDestinationFieldIds: this.layer.originAndDestinationFieldIds,
         symbols: {
@@ -43,7 +47,7 @@ define([
             strokeStyle: 'rgb(17, 142, 170)',
             shadowBlur: 0
           },
-          pathSymbol: {
+          flowline: {
             strokeStyle: 'rgba(255, 0, 51, 0.8)',
             lineWidth: 0.75,
             lineCap: 'round',
@@ -55,6 +59,7 @@ define([
 
         render: function(ctx, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
           this._drawAllCanvasPoints(ctx);
+          this._drawSelectedCanvasPaths(ctx);
           // this._renderer.requestRender(source);
         },
 
@@ -85,25 +90,82 @@ define([
               return;
             }
 
-            var mapPoint = graphic.geometry;
+            var screenCoordinates = this._convertMapPointToScreenCoordinates(graphic.geometry);
 
-            var screenPoint = this.view.toScreen(mapPoint);
-
-            // var pt = [0,0];
-            // options.toScreen(pt, mapPoint.x, mapPoint.y);
-
-            ctx.beginPath();
-            ctx.globalCompositeOperation = symbolObject.globalCompositeOperation;
-            ctx.fillStyle = symbolObject.fillStyle;
-            ctx.lineWidth = symbolObject.lineWidth;
-            ctx.strokeStyle = symbolObject.strokeStyle;
-            ctx.shadowBlur = symbolObject.shadowBlur;
-            ctx.arc(screenPoint.x, screenPoint.y, symbolObject.radius, 0, 2 * Math.PI, false);
-            // ctx.arc(pt[0], pt[1], symbolObject.radius, 0, 2 * Math.PI, false);
-            ctx.fill();
-            ctx.stroke();
-            ctx.closePath();
+            this._applyCanvasPointSymbol(ctx, symbolObject, screenCoordinates);
           }, this);
+        },
+
+        _applyCanvasPointSymbol: function(ctx, symbolObject, screenCoordinates) {
+          ctx.beginPath();
+          ctx.globalCompositeOperation = symbolObject.globalCompositeOperation;
+          ctx.fillStyle = symbolObject.fillStyle;
+          ctx.lineWidth = symbolObject.lineWidth;
+          ctx.strokeStyle = symbolObject.strokeStyle;
+          ctx.shadowBlur = symbolObject.shadowBlur;
+          ctx.arc(screenCoordinates[0], screenCoordinates[1], symbolObject.radius, 0, 2 * Math.PI, false);
+          ctx.fill();
+          ctx.stroke();
+          ctx.closePath();
+        },
+
+        _drawSelectedCanvasPaths: function(ctx) {
+          this.graphics.forEach(function(graphic) {
+            var attributes = graphic.attributes;
+
+            // TODO: wire up being able to select specific O-D relationships for line drawing
+
+            // if (!attributes._isSelectedForPathDisplay) {
+            //   return;
+            // }
+
+            // origin and destination points for drawing curved lines
+            var originPoint = new Point({
+              x: attributes[this.originAndDestinationFieldIds.originGeometry.x],
+              y: attributes[this.originAndDestinationFieldIds.originGeometry.y],
+              spatialReference: graphic.geometry.spatialReference
+            });
+
+            var destinationPoint = new Point({
+              x: attributes[this.originAndDestinationFieldIds.destinationGeometry.x],
+              y: attributes[this.originAndDestinationFieldIds.destinationGeometry.y],
+              spatialReference: graphic.geometry.spatialReference
+            });
+
+            var screenOriginCoordinates = this._convertMapPointToScreenCoordinates(originPoint);
+            var screenDestinationCoordinates = this._convertMapPointToScreenCoordinates(destinationPoint);
+
+            this._applyCanvasLineSymbol(ctx, this.symbols.flowline, screenOriginCoordinates, screenDestinationCoordinates);
+          }, this);
+        },
+
+        _applyCanvasLineSymbol: function(ctx, symbolObject, screenOriginCoordinates, screenDestinationCoordinates) {
+          ctx.beginPath();
+          ctx.lineCap = symbolObject.lineCap;
+          ctx.lineWidth = symbolObject.lineWidth;
+          ctx.strokeStyle = symbolObject.strokeStyle;
+          ctx.shadowBlur = symbolObject.shadowBlur;
+          ctx.shadowColor = symbolObject.shadowColor;
+          ctx.moveTo(screenOriginCoordinates[0], screenOriginCoordinates[1]); // start point
+          ctx.bezierCurveTo(
+            screenOriginCoordinates[0], screenDestinationCoordinates[1], // control point
+            screenDestinationCoordinates[0], screenDestinationCoordinates[1], // control point
+            screenDestinationCoordinates[0], screenDestinationCoordinates[1] // end point
+          );
+          ctx.stroke();
+          ctx.closePath();
+        },
+
+        _convertMapPointToScreenCoordinates: function(mapPoint) {
+          var mapPoint = mapPoint.spatialReference.isGeographic
+            ? webMercatorUtils.geographicToWebMercator(mapPoint)
+            : mapPoint;
+
+          var screenPoint = [0, 0];
+
+          options.toScreen(screenPoint, mapPoint.x, mapPoint.y);
+
+          return screenPoint;
         }
       };
 

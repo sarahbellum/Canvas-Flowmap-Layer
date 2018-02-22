@@ -3,15 +3,17 @@ require([
   'esri/Graphic',
   'esri/Map',
   'esri/views/MapView',
+  'esri/widgets/Compass',
   'dojo/domReady!'
 ], function(
   CanvasFlowmapLayer,
   Graphic,
   Map,
-  MapView
+  MapView,
+  Compass
 ) {
   var map = new Map({
-    basemap: 'dark-gray-vector'
+    basemap: 'gray-vector'
   });
 
   var view = new MapView({
@@ -20,6 +22,10 @@ require([
     zoom: 1,
     center: [0, 0]
   });
+
+  view.ui.add(new Compass({
+    view: view
+  }), 'top-left');
 
   view.when(function() {
     // here we use Papa Parse to load and read the CSV data
@@ -76,38 +82,6 @@ require([
 
   return;
 
-  
-  // here we use Papa Parse to load and read the CSV data
-  // we could have also used another library like D3js to do the same
-  var cityToCityLayer = new CanvasFlowmapLayer({
-    // JSAPI GraphicsLayer constructor properties
-    id: 'cityToCityLayer',
-    visible: true,
-    // CanvasFlowmapLayer custom constructor properties
-    //  - required
-    originAndDestinationFieldIds: {
-      originUniqueIdField: 's_city_id',
-      originGeometry: {
-        x: 's_lon',
-        y: 's_lat',
-        spatialReference: {
-          wkid: 4326
-        }
-      },
-      destinationUniqueIdField: 'e_city_id',
-      destinationGeometry: {
-        x: 'e_lon',
-        y: 'e_lat',
-        spatialReference: {
-          wkid: 4326
-        }
-      }
-    },
-    //  - optional
-    pathDisplayMode: 'selection',
-    wrapAroundCanvas: true,
-    animationStarted: true
-  });
 
   cityToCityLayer.on('click', function(evt) {
     // evt.sharedOriginGraphics: array of all ORIGIN graphics with the same ORIGIN ID field
@@ -124,6 +98,6 @@ require([
     if (evt.sharedDestinationGraphics.length) {
       cityToCityLayer.selectGraphicsForPathDisplay(evt.sharedDestinationGraphics, 'SELECTION_NEW');
     }
-
   });
+
 });
