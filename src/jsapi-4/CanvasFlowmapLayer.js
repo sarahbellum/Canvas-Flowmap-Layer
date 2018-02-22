@@ -119,6 +119,11 @@ define([
             //   return;
             // }
 
+            // for now, just draw "one half" of all O-D graphics
+            if (!attributes._isOrigin) {
+              return;
+            }
+
             // origin and destination points for drawing curved lines
             var originPoint = new Point({
               x: attributes[this.originAndDestinationFieldIds.originGeometry.x],
