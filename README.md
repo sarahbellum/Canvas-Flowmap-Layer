@@ -1,8 +1,8 @@
 # Canvas-Flowmap-Layer
 
-The Canvas-Flowmap-Layer extends the ArcGIS API for JavaScript v3.x (Esri JSAPI) to map the flow of objects from an origin point to a destination point by using a Bezier curve. Esri graphics are translated to pixel space so that rendering for the points and curves are mapped to an [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement).  
+The Canvas-Flowmap-Layer extends the ArcGIS API for JavaScript v3.x (Esri JSAPI) to map the flow of objects from an origin point to a destination point by using a Bezier curve. Esri graphics are translated to pixel space so that rendering for the points and curves are mapped to an [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement).
 
-**Demos** 
+**Demos:**
 
 - [Simple](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/main)
 - [Feature comparison](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos/comparison/) (aka: kitchen sink, sandbox)
@@ -13,7 +13,7 @@ There is also a LeafletJS version of this layer plugin available at [jwasilgeo/L
 
 View our [**presentation at NACIS 2017**](https://www.youtube.com/watch?v=cRPx-BfBtv0).
 
-**Table of Contents**
+**Table of Contents:**
 
 - [Purpose](#purpose)
 - [Line Animation](#line-animation)
@@ -38,7 +38,7 @@ Flow mapping is a cartographic necessity, yet still lacks empirical design rules
 
 **1. Aesthetics.** While straight lines are not inherently ugly, an overlapping or convergence of them across a global dataset can be. A series of Bezier curves created with the same formula, even when displaying an over-abundance, has a mathematical congruent flow which greatly improves the map's aesthetics.
 
-![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowmap-Layer/master/img/img_01.png)  
+![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowmap-Layer/master/img/img_01.png)
 
 **2. Directional symbology.** Whether the curve is convex or concave depends on the direction of the line. This symbology might be too new immediately intuit, however this rule is required for aesthetic veracity and consistency. The bonus is that map readers can immediately know the direction of the line without having to add animation.
 
@@ -58,19 +58,19 @@ The Canvas-Flowmap-Layer uses two separate lines when animation is added, althou
 
 The demo pages provided in this repository show three different types of data relationships that can be used to add lines to the map: one-to-many; many-to-one; one-to-one, where the first part of these relationships indicate the origin ("one" or "many"), and the last part indicates the destination. There are three different csv files used for our demo pages of the Canvas-Flowmap-Layer, one for each data relationship type.
 
-##### one-to-many
+#### one-to-many
 
 In the one-to-many csv file, the *one* or origin exists on several rows - one row for each of its destinations. Each destination in the one-to-many is only listed on one row, which is the same row as its origin. So the number of rows for each origin is determined by the number of destinations it supplies. In the image below, The city of Hechi and San Jose are both origins; Hechi supplies 9 destinations: Sahr, Tandil, Victorville, Cranbourne, Cuirco, Dahuk, Olympia, Oostanay, and Oran.
 
-![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowmap-Layer/master/img/one-to-many.png)
+![data-screenshot](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowmap-Layer/master/img/one-to-many.png)
 
-##### many-to-one
+#### many-to-one
 
 The many-to-one csv file for this implementation of the Canvas-Flowmap-Layer is similar to the concept of the one-to-many csv file explained above. In the image below, many origin cities supply the one city of Hechi.
 
-![canvas](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowmap-Layer/master/img/many-to-one.png)  
+![data-screenshots](https://raw.githubusercontent.com/sarahbellum/Canvas-Flowmap-Layer/master/img/many-to-one.png)
 
-##### one-to-one
+#### one-to-one
 
 In the csv file for the one-to-one data relationship, each origin exists on one row only along with its one destination.
 
@@ -88,7 +88,7 @@ For example, you could listen for a `click` event and then choose to either add 
 
 The Canvas-Flowmap-Layer has default symbology established for origin points, destination points, Bezier curves, and animated Bezier curves. You can change these defaults using the various symbol configuration objects (e.g. `originCircleProperties`, `destinationCircleProperties`, `pathProperties`, `animatePathProperties`, etc.).
 
-Symbol configurations are defined using property objects inspired by the [ArcGIS REST API renderer objects ](http://resources.arcgis.com/en/help/arcgis-rest-api/#/Renderer_objects/02r30000019t000000/) specification. Simple, unique value, and class breaks are all supported but instead use canvas stroke and line style property names.
+Symbol configurations are defined using property objects inspired by the [ArcGIS REST API renderer objects](http://resources.arcgis.com/en/help/arcgis-rest-api/#/Renderer_objects/02r30000019t000000/) specification. Simple, unique value, and class breaks are all supported but instead use canvas stroke and line style property names.
 
 The [custom symbology examples](#custom-symbology-examples) in the API documentation below provide a starting point on how some of these configuration objects should be structured.
 
@@ -126,14 +126,13 @@ canvasFlowmapLayer.addGraphics([pointGraphic1, pointGraphic2, ..., pointGraphic1
 map.addLayer(canvasFlowmapLayer);
 ```
 
-##### Convenience options available in constructor _only_:
+**Convenience options available in constructor _only_:**
 
 | Property | Description |
 | --- | --- |
 | `animationDuration` | See `setAnimationDuration()` method description below. |
 | `animationEasingFamily` | See `setAnimationEasing()` method description below. |
 | `animationEasingType` | See `setAnimationEasing()` method description below. |
-
 
 ### Property Summary
 
@@ -150,7 +149,7 @@ map.addLayer(canvasFlowmapLayer);
 | `originHighlightCircleProperties` | _Optional_. `Object`. This object defines the symbol properties of the origin point as rendered on the canvas when highlighted. |
 | `destinationHighlightCircleProperties` | _Optional_. `Object`. This object defines the symbol properties of the destination point as rendered on the canvas when highlighted. |
 
-##### `originAndDestinationFieldIds` example:
+**`originAndDestinationFieldIds` example:**
 
 ```javascript
 // you must fill in each of these values for these required properties,
@@ -175,7 +174,7 @@ map.addLayer(canvasFlowmapLayer);
 }
 ```
 
-##### custom symbology examples:
+**custom symbology examples:**
 
 <details>
   <summary>
@@ -300,4 +299,5 @@ pathProperties: {
 | `mouse-over` | Extends [GraphicsLayer `mouse-over`](https://developers.arcgis.com/javascript/3/jsapi/graphicslayer-amd.html#event-mouse-over) and adds the following properties to the event object: <br/><br/> `isOriginGraphic`: `true` when the mouse first entered an origin graphic, but `false` when the mouse first entered a destination graphic. <br/><br/> `sharedOriginGraphics`: `Array` of Esri graphics that share the same origin. <br/><br/> `sharedDestinationGraphics`: `Array` of Esri graphics that share the same destination. |
 
 ## Licensing
+
 A copy of the license is available in the repository's [LICENSE](./LICENSE) file.

@@ -25,6 +25,7 @@ require([
     // here we use Papa Parse to load and read the CSV data
     // we could have also used another library like D3js to do the same
     Papa.parse('../csv-data/Flowmap_Cities_one_to_one.csv', {
+    // Papa.parse('../csv-data/Flowmap_Cities_one_to_many.csv', {
       download: true,
       header: true,
       dynamicTyping: true,
@@ -42,7 +43,25 @@ require([
         });
 
         var canvasFlowmapLayer = new CanvasFlowmapLayer({
-          graphics: graphicsFromCsvRows
+          graphics: graphicsFromCsvRows,
+          originAndDestinationFieldIds: {
+            originUniqueIdField: 's_city_id',
+            originGeometry: {
+              x: 's_lon',
+              y: 's_lat',
+              spatialReference: {
+                wkid: 4326
+              }
+            },
+            destinationUniqueIdField: 'e_city_id',
+            destinationGeometry: {
+              x: 'e_lon',
+              y: 'e_lat',
+              spatialReference: {
+                wkid: 4326
+              }
+            }
+          }
         });
 
         map.layers.add(canvasFlowmapLayer);
