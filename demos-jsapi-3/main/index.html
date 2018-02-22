@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="description" content="Canvas Flowmap Layer with the Esri ArcGIS API for JavaScript v3.">
+
+  <title>Canvas Flowmap Layer with JSAPI v3</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/3.22/esri/themes/calcite/esri/esri.css">
+
+  <style>
+    html,
+    body,
+    #map {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+
+<body class="calcite">
+  <div id="map"></div>
+
+  <!-- load 3rd-party CSV parsing libary  -->
+  <script src="https://unpkg.com/papaparse@4/papaparse.min.js"></script>
+
+  <!-- set Dojo configuration options -->
+  <script>
+    var dojoConfig = {
+      async: true,
+      packages: [{
+        name: 'Canvas-Flowmap-Layer',
+        location: location.pathname.replace(/[^\/]+$/, '') + '../../src/jsapi-3'
+      }]
+    };
+  </script>
+
+  <!-- load Esri JSAPI -->
+  <script src="https://js.arcgis.com/3.22compact/"></script>
+
+  <!-- load this app's code -->
+  <script src="script.js"></script>
+</body>
+
+</html>
