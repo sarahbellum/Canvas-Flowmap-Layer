@@ -13,13 +13,13 @@ require([
   Compass
 ) {
   var map = new Map({
-    basemap: 'gray-vector'
+    basemap: 'dark-gray-vector'
   });
 
   var view = new MapView({
     container: 'viewDiv',
     map: map,
-    zoom: 1,
+    zoom: 2,
     center: [0, 0]
   });
 
@@ -30,8 +30,8 @@ require([
   view.when(function() {
     // here we use Papa Parse to load and read the CSV data
     // we could have also used another library like D3js to do the same
-    Papa.parse('../csv-data/Flowmap_Cities_one_to_one.csv', {
-    // Papa.parse('../csv-data/Flowmap_Cities_one_to_many.csv', {
+    // Papa.parse('../csv-data/Flowmap_Cities_one_to_one.csv', {
+    Papa.parse('../csv-data/Flowmap_Cities_one_to_many.csv', {
       download: true,
       header: true,
       dynamicTyping: true,
@@ -74,30 +74,25 @@ require([
 
         // automatically select some graphics for path display to demonstrate the flowmap functionality,
         // without the user having to first click on the layer
-        // cityToCityLayer.selectGraphicsForPathDisplayById('s_city_id', 562, true, 'SELECTION_NEW');
+        // canvasFlowmapLayer.selectGraphicsForPathDisplayById('s_city_id', 562, true, 'SELECTION_NEW');
+        
+        // canvasFlowmapLayer.on('click', function(evt) {
+        //   // evt.sharedOriginGraphics: array of all ORIGIN graphics with the same ORIGIN ID field
+        //   // evt.sharedDestinationGraphics: array of all ORIGIN graphics with the same DESTINATION ID field
+        //   //  - you can mark shared origin or destination graphics as selected for path display using these modes:
+        //   //    - 'SELECTION_NEW', 'SELECTION_ADD', or 'SELECTION_SUBTRACT'
+        //   //  - these selected graphics inform the canvas flowmap layer which paths to display
+      
+        //   // NOTE: if the layer's pathDisplayMode was originally set to "all",
+        //   // this manual selection will override the displayed paths
+        //   if (evt.sharedOriginGraphics.length) {
+        //     canvasFlowmapLayer.selectGraphicsForPathDisplay(evt.sharedOriginGraphics, 'SELECTION_NEW');
+        //   }
+        //   if (evt.sharedDestinationGraphics.length) {
+        //     canvasFlowmapLayer.selectGraphicsForPathDisplay(evt.sharedDestinationGraphics, 'SELECTION_NEW');
+        //   }
+        // });
       }
     });
   });
-
-
-  return;
-
-
-  cityToCityLayer.on('click', function(evt) {
-    // evt.sharedOriginGraphics: array of all ORIGIN graphics with the same ORIGIN ID field
-    // evt.sharedDestinationGraphics: array of all ORIGIN graphics with the same DESTINATION ID field
-    //  - you can mark shared origin or destination graphics as selected for path display using these modes:
-    //    - 'SELECTION_NEW', 'SELECTION_ADD', or 'SELECTION_SUBTRACT'
-    //  - these selected graphics inform the canvas flowmap layer which paths to display
-
-    // NOTE: if the layer's pathDisplayMode was originally set to "all",
-    // this manual selection will override the displayed paths
-    if (evt.sharedOriginGraphics.length) {
-      cityToCityLayer.selectGraphicsForPathDisplay(evt.sharedOriginGraphics, 'SELECTION_NEW');
-    }
-    if (evt.sharedDestinationGraphics.length) {
-      cityToCityLayer.selectGraphicsForPathDisplay(evt.sharedDestinationGraphics, 'SELECTION_NEW');
-    }
-  });
-
 });

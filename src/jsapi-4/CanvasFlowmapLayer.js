@@ -9,6 +9,7 @@ define([
   Point,
   webMercatorUtils
 ) {
+  // PART A: CUSTOM LAYER VIEW
   var CustomLayerView = BaseLayerView2D.createSubclass({
     attach: function() {
       this._renderer = this.startExportRendering({
@@ -30,36 +31,12 @@ define([
         // view: this.view,
         graphics: this.layer.graphics,
         originAndDestinationFieldIds: this.layer.originAndDestinationFieldIds,
-        symbols: {
-          originCircle: {
-            globalCompositeOperation: 'destination-over',
-            radius: 5,
-            fillStyle: 'rgba(195, 255, 62, 0.60)',
-            lineWidth: 1,
-            strokeStyle: 'rgb(195, 255, 62)',
-            shadowBlur: 0
-          },
-          destinationCircle: {
-            globalCompositeOperation: 'destination-over',
-            radius: 2.5,
-            fillStyle: 'rgba(17, 142, 170, 0.7)',
-            lineWidth: 0.25,
-            strokeStyle: 'rgb(17, 142, 170)',
-            shadowBlur: 0
-          },
-          flowline: {
-            strokeStyle: 'rgba(255, 0, 51, 0.8)',
-            lineWidth: 0.75,
-            lineCap: 'round',
-            shadowColor: 'rgb(255, 0, 51)',
-            shadowBlur: 1.5
-          }
-        },
+        symbols: this.layer.symbols,
         _renderer: this._renderer,
 
         render: function(ctx, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
           this._drawAllCanvasPoints(ctx);
-          this._drawSelectedCanvasPaths(ctx);
+          this._drawAllCanvasPaths(ctx);
           // this._renderer.requestRender(source);
         },
 
@@ -109,7 +86,7 @@ define([
           ctx.closePath();
         },
 
-        _drawSelectedCanvasPaths: function(ctx) {
+        _drawAllCanvasPaths: function(ctx) {
           this.graphics.forEach(function(graphic) {
             var attributes = graphic.attributes;
 
@@ -120,7 +97,8 @@ define([
             // }
 
             // for now, just draw "one half" of all O-D graphics
-            if (!attributes._isOrigin) {
+            // and hard-code the Johannesburg O-D example
+            if (!attributes._isOrigin || [262].indexOf(attributes.s_city_id) === -1) {
               return;
             }
 
@@ -178,6 +156,7 @@ define([
     }
   });
 
+  // PART B: CUSTOM LAYER
   var CustomLayer = Layer.createSubclass({
     declaredClass: 'esri.layers.CanvasFlowmapLayer',
 
@@ -201,6 +180,32 @@ define([
         }
       }
     },
+
+    symbols: {
+      originCircle: {
+        globalCompositeOperation: 'destination-over',
+        radius: 5,
+        fillStyle: 'rgba(195, 255, 62, 0.60)',
+        lineWidth: 1,
+        strokeStyle: 'rgb(195, 255, 62)',
+        shadowBlur: 0
+      },
+      destinationCircle: {
+        globalCompositeOperation: 'destination-over',
+        radius: 2.5,
+        fillStyle: 'rgba(17, 142, 170, 0.7)',
+        lineWidth: 0.25,
+        strokeStyle: 'rgb(17, 142, 170)',
+        shadowBlur: 0
+      },
+      flowline: {
+        strokeStyle: 'rgba(255, 0, 51, 0.8)',
+        lineWidth: 0.75,
+        lineCap: 'round',
+        shadowColor: 'rgb(255, 0, 51)',
+        shadowBlur: 1.5
+      }
+    },
     
     createLayerView: function(view) {
       if (view.type === '2d') {
@@ -217,8 +222,10 @@ define([
 
     _convertOriginAndDestinationGraphics: function() {
       this.graphics.forEach(function(originGraphic, idx, graphicsArray) {
+        // origin graphic
         originGraphic.attributes._isOrigin = true;
 
+        // destination graphic
         var destinationGraphic = originGraphic.clone();
         destinationGraphic.attributes._isOrigin = false;
         destinationGraphic.geometry = {
