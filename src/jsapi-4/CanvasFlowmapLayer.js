@@ -9,7 +9,9 @@ define([
   Point,
   webMercatorUtils
 ) {
-  // PART A: CUSTOM LAYER VIEW
+  /*
+    PART A: custom layer view
+  */
   var CustomLayerView = BaseLayerView2D.createSubclass({
     attach: function() {
       this._renderer = this.startExportRendering({
@@ -97,8 +99,8 @@ define([
             // }
 
             // for now, just draw "one half" of all O-D graphics
-            // and hard-code the Johannesburg O-D example
-            if (!attributes._isOrigin || [262].indexOf(attributes.s_city_id) === -1) {
+            // and hard-code the Alexandria, Egypt O-D example
+            if (!attributes._isOrigin || [1].indexOf(attributes.s_city_id) === -1) {
               return;
             }
 
@@ -156,7 +158,9 @@ define([
     }
   });
 
-  // PART B: CUSTOM LAYER
+  /*
+    PART B: custom layer, which makes use of custom layer view from PART A
+  */
   var CustomLayer = Layer.createSubclass({
     declaredClass: 'esri.layers.CanvasFlowmapLayer',
 
@@ -213,6 +217,8 @@ define([
         // individual origin and destination graphics
         this._convertOriginAndDestinationGraphics();
 
+        // here the pieces are all glued together
+        // with an instance of the custom layer view
         return new CustomLayerView({
           view: view,
           layer: this

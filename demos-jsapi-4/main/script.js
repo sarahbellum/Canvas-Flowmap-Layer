@@ -20,7 +20,7 @@ require([
     container: 'viewDiv',
     map: map,
     zoom: 2,
-    center: [0, 0]
+    center: [29.94999589, 31.20001935]
   });
 
   view.ui.add(new Compass({
