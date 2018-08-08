@@ -13,148 +13,122 @@ define([
     PART A: custom layer view
   */
   var CustomLayerView = BaseLayerView2D.createSubclass({
-    attach: function() {
-      this._renderer = this.startExportRendering({
-        type: 'canvas-2d',
-        createExport: this._createExport.bind(this),
-        // disposeExport: function(imageSource) { }
-      });
+    render: function(renderParameters) {
+      this._drawAllCanvasPoints(renderParameters.context, renderParameters.state);
+      this._drawAllCanvasPaths(renderParameters.context, renderParameters.state);
     },
 
-    detach: function() {
-      this._renderer && this._renderer.stop();
-      this._renderer = null;
-    },
+    _drawAllCanvasPoints: function(ctx, state) {
+      // re-draw only 1 copy of each unique ORIGIN or DESTINATION point using the canvas
+      // and add the unique value value to the appropriate array for tracking and comparison
 
-    _createExport: function(extent, width, height, options) {
-      var source = {
-        width: width,
-        height: height,
-        // view: this.view,
-        graphics: this.layer.graphics,
-        originAndDestinationFieldIds: this.layer.originAndDestinationFieldIds,
-        symbols: this.layer.symbols,
-        _renderer: this._renderer,
+      // reset temporary tracking arrays to make sure only 1 copy of each origin or destination point gets drawn on the canvas
+      var originUniqueIdValues = [];
+      var destinationUniqueIdValues = [];
 
-        render: function(ctx, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
-          this._drawAllCanvasPoints(ctx);
-          this._drawAllCanvasPaths(ctx);
-          // this._renderer.requestRender(source);
-        },
+      var originUniqueIdField = this.layer.originAndDestinationFieldIds.originUniqueIdField;
+      var destinationUniqueIdField = this.layer.originAndDestinationFieldIds.destinationUniqueIdField;
 
-        _drawAllCanvasPoints: function(ctx) {
-          // re-draw only 1 copy of each unique ORIGIN or DESTINATION point using the canvas
-          // and add the unique value value to the appropriate array for tracking and comparison
+      this.layer.graphics.forEach(function(graphic) {
+        var attributes = graphic.attributes;
+        var isOrigin = attributes._isOrigin;
+        var symbolObject;
 
-          // reset temporary tracking arrays to make sure only 1 copy of each origin or destination point gets drawn on the canvas
-          var originUniqueIdValues = [];
-          var destinationUniqueIdValues = [];
-
-          var originUniqueIdField = this.originAndDestinationFieldIds.originUniqueIdField;
-          var destinationUniqueIdField = this.originAndDestinationFieldIds.destinationUniqueIdField;
-          
-          this.graphics.forEach(function(graphic) {
-            var attributes = graphic.attributes;
-            var isOrigin = attributes._isOrigin;
-            var symbolObject;
-
-            if (isOrigin && originUniqueIdValues.indexOf(attributes[originUniqueIdField]) === -1) {
-              originUniqueIdValues.push(attributes[originUniqueIdField]);
-              symbolObject = this.symbols.originCircle;
-            } else if (!isOrigin && destinationUniqueIdValues.indexOf(attributes[destinationUniqueIdField]) === -1) {
-              destinationUniqueIdValues.push(attributes[destinationUniqueIdField]);
-              symbolObject = this.symbols.destinationCircle;
-            } else {
-              // do not attempt to draw an origin or destination circle on the canvas if it is already in one of the tracking arrays
-              return;
-            }
-
-            var screenCoordinates = this._convertMapPointToScreenCoordinates(graphic.geometry);
-
-            this._applyCanvasPointSymbol(ctx, symbolObject, screenCoordinates);
-          }, this);
-        },
-
-        _applyCanvasPointSymbol: function(ctx, symbolObject, screenCoordinates) {
-          ctx.beginPath();
-          ctx.globalCompositeOperation = symbolObject.globalCompositeOperation;
-          ctx.fillStyle = symbolObject.fillStyle;
-          ctx.lineWidth = symbolObject.lineWidth;
-          ctx.strokeStyle = symbolObject.strokeStyle;
-          ctx.shadowBlur = symbolObject.shadowBlur;
-          ctx.arc(screenCoordinates[0], screenCoordinates[1], symbolObject.radius, 0, 2 * Math.PI, false);
-          ctx.fill();
-          ctx.stroke();
-          ctx.closePath();
-        },
-
-        _drawAllCanvasPaths: function(ctx) {
-          this.graphics.forEach(function(graphic) {
-            var attributes = graphic.attributes;
-
-            // TODO: wire up being able to select specific O-D relationships for line drawing
-
-            // if (!attributes._isSelectedForPathDisplay) {
-            //   return;
-            // }
-
-            // for now, just draw "one half" of all O-D graphics
-            // and hard-code the Alexandria, Egypt O-D example
-            if (!attributes._isOrigin || [1].indexOf(attributes.s_city_id) === -1) {
-              return;
-            }
-
-            // origin and destination points for drawing curved lines
-            var originPoint = new Point({
-              x: attributes[this.originAndDestinationFieldIds.originGeometry.x],
-              y: attributes[this.originAndDestinationFieldIds.originGeometry.y],
-              spatialReference: graphic.geometry.spatialReference
-            });
-
-            var destinationPoint = new Point({
-              x: attributes[this.originAndDestinationFieldIds.destinationGeometry.x],
-              y: attributes[this.originAndDestinationFieldIds.destinationGeometry.y],
-              spatialReference: graphic.geometry.spatialReference
-            });
-
-            var screenOriginCoordinates = this._convertMapPointToScreenCoordinates(originPoint);
-            var screenDestinationCoordinates = this._convertMapPointToScreenCoordinates(destinationPoint);
-
-            this._applyCanvasLineSymbol(ctx, this.symbols.flowline, screenOriginCoordinates, screenDestinationCoordinates);
-          }, this);
-        },
-
-        _applyCanvasLineSymbol: function(ctx, symbolObject, screenOriginCoordinates, screenDestinationCoordinates) {
-          ctx.beginPath();
-          ctx.lineCap = symbolObject.lineCap;
-          ctx.lineWidth = symbolObject.lineWidth;
-          ctx.strokeStyle = symbolObject.strokeStyle;
-          ctx.shadowBlur = symbolObject.shadowBlur;
-          ctx.shadowColor = symbolObject.shadowColor;
-          ctx.moveTo(screenOriginCoordinates[0], screenOriginCoordinates[1]); // start point
-          ctx.bezierCurveTo(
-            screenOriginCoordinates[0], screenDestinationCoordinates[1], // control point
-            screenDestinationCoordinates[0], screenDestinationCoordinates[1], // control point
-            screenDestinationCoordinates[0], screenDestinationCoordinates[1] // end point
-          );
-          ctx.stroke();
-          ctx.closePath();
-        },
-
-        _convertMapPointToScreenCoordinates: function(mapPoint) {
-          var mapPoint = mapPoint.spatialReference.isGeographic
-            ? webMercatorUtils.geographicToWebMercator(mapPoint)
-            : mapPoint;
-
-          var screenPoint = [0, 0];
-
-          options.toScreen(screenPoint, mapPoint.x, mapPoint.y);
-
-          return screenPoint;
+        if (isOrigin && originUniqueIdValues.indexOf(attributes[originUniqueIdField]) === -1) {
+          originUniqueIdValues.push(attributes[originUniqueIdField]);
+          symbolObject = this.layer.symbols.originCircle;
+        } else if (!isOrigin && destinationUniqueIdValues.indexOf(attributes[destinationUniqueIdField]) === -1) {
+          destinationUniqueIdValues.push(attributes[destinationUniqueIdField]);
+          symbolObject = this.layer.symbols.destinationCircle;
+        } else {
+          // do not attempt to draw an origin or destination circle on the canvas if it is already in one of the tracking arrays
+          return;
         }
-      };
 
-      return source;
+        var screenCoordinates = this._convertMapPointToScreenCoordinates(graphic.geometry, state);
+
+        this._applyCanvasPointSymbol(ctx, symbolObject, screenCoordinates);
+      }, this);
+    },
+
+    _applyCanvasPointSymbol: function(ctx, symbolObject, screenCoordinates) {
+      ctx.beginPath();
+      ctx.globalCompositeOperation = symbolObject.globalCompositeOperation;
+      ctx.fillStyle = symbolObject.fillStyle;
+      ctx.lineWidth = symbolObject.lineWidth;
+      ctx.strokeStyle = symbolObject.strokeStyle;
+      ctx.shadowBlur = symbolObject.shadowBlur;
+      ctx.arc(screenCoordinates[0], screenCoordinates[1], symbolObject.radius, 0, 2 * Math.PI, false);
+      ctx.fill();
+      ctx.stroke();
+      ctx.closePath();
+    },
+
+    _drawAllCanvasPaths: function(ctx, state) {
+      this.layer.graphics.forEach(function(graphic) {
+        var attributes = graphic.attributes;
+
+        // TODO: wire up being able to select specific O-D relationships for line drawing
+
+        // if (!attributes._isSelectedForPathDisplay) {
+        //   return;
+        // }
+
+        // TODO: for now, just draw "one half" of all O-D graphics
+        // and hard-code the Alexandria, Egypt O-D example
+        if (!attributes._isOrigin || [1].indexOf(attributes.s_city_id) === -1) {
+          return;
+        }
+
+        // origin and destination points for drawing curved lines
+        var originPoint = new Point({
+          x: attributes[this.layer.originAndDestinationFieldIds.originGeometry.x],
+          y: attributes[this.layer.originAndDestinationFieldIds.originGeometry.y],
+          spatialReference: graphic.geometry.spatialReference
+        });
+
+        var destinationPoint = new Point({
+          x: attributes[this.layer.originAndDestinationFieldIds.destinationGeometry.x],
+          y: attributes[this.layer.originAndDestinationFieldIds.destinationGeometry.y],
+          spatialReference: graphic.geometry.spatialReference
+        });
+
+        var screenOriginCoordinates = this._convertMapPointToScreenCoordinates(originPoint, state);
+        var screenDestinationCoordinates = this._convertMapPointToScreenCoordinates(destinationPoint, state);
+
+        this._applyCanvasLineSymbol(ctx, this.layer.symbols.flowline, screenOriginCoordinates, screenDestinationCoordinates);
+      }, this);
+    },
+
+    _applyCanvasLineSymbol: function(ctx, symbolObject, screenOriginCoordinates, screenDestinationCoordinates) {
+      ctx.beginPath();
+      ctx.lineCap = symbolObject.lineCap;
+      ctx.lineWidth = symbolObject.lineWidth;
+      ctx.strokeStyle = symbolObject.strokeStyle;
+      ctx.shadowBlur = symbolObject.shadowBlur;
+      ctx.shadowColor = symbolObject.shadowColor;
+      ctx.moveTo(screenOriginCoordinates[0], screenOriginCoordinates[1]); // start point
+      ctx.bezierCurveTo(
+        screenOriginCoordinates[0], screenDestinationCoordinates[1], // control point
+        screenDestinationCoordinates[0], screenDestinationCoordinates[1], // control point
+        screenDestinationCoordinates[0], screenDestinationCoordinates[1] // end point
+      );
+      ctx.stroke();
+      ctx.closePath();
+    },
+
+    _convertMapPointToScreenCoordinates: function(mapPoint, rendererState) {
+      var mapPoint = mapPoint.spatialReference.isGeographic
+        ? webMercatorUtils.geographicToWebMercator(mapPoint)
+        : mapPoint;
+
+      var screenPoint = [0, 0];
+
+      if (rendererState && rendererState.toScreen) {
+        rendererState.toScreen(screenPoint, mapPoint.x, mapPoint.y);
+      }
+
+      return screenPoint;
     }
   });
 
