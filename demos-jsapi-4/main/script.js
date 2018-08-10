@@ -8,17 +8,15 @@ require([
 ], function(
   CanvasFlowmapLayer,
   Graphic,
-  Map,
+  EsriMap,
   MapView,
   Compass
 ) {
-  var map = new Map({
-    basemap: 'dark-gray-vector'
-  });
-
   var view = new MapView({
     container: 'viewDiv',
-    map: map,
+    map: new EsriMap({
+      basemap: 'dark-gray-vector'
+    }),
     zoom: 2,
     center: [29.94999589, 31.20001935]
   });
@@ -70,12 +68,34 @@ require([
           }
         });
 
-        map.layers.add(canvasFlowmapLayer);
+        view.map.layers.add(canvasFlowmapLayer);
 
-        // automatically select some graphics for path display to demonstrate the flowmap functionality,
-        // without the user having to first click on the layer
-        // canvasFlowmapLayer.selectGraphicsForPathDisplayById('s_city_id', 562, true, 'SELECTION_NEW');
-        
+        // get access to the CanvasFlowmapLayer's layerView to make modifications
+        // of which O-D relationships are flagged for path display
+        view.whenLayerView(canvasFlowmapLayer).then(function(layerView) {
+          // automatically select a few ORIGIN locations for path display
+          // in order to demonstrate the flowmap functionality,
+          // without being overwhelming and showing all O-D relationships
+
+          // Reykjavík
+          layerView.selectGraphicsForPathDisplayById('s_city_id', 562, true, 'SELECTION_NEW');
+          
+          // Alexandria
+          // layerView.selectGraphicsForPathDisplayById('s_city_id', 1, true, 'SELECTION_ADD');
+
+          // Tokyo
+          layerView.selectGraphicsForPathDisplayById('s_city_id', 642, true, 'SELECTION_ADD');
+
+          // TODO: should this method be on the layer instead of the layerView?
+          // layer.selectGraphicsForPathDisplayById(...)
+          // layer.selectGraphicsForPathDisplay(...)
+        });
+
+        // TODO: in JSAPI v4 this custom layer needs to be able to support a view.hitTest
+        // https://developers.arcgis.com/javascript/latest/api-reference/esri-views-MapView.html#hitTest
+
+        // NOTE: in JSAPI v3 we just wired up a click listener like so:
+
         // canvasFlowmapLayer.on('click', function(evt) {
         //   // evt.sharedOriginGraphics: array of all ORIGIN graphics with the same ORIGIN ID field
         //   // evt.sharedDestinationGraphics: array of all ORIGIN graphics with the same DESTINATION ID field

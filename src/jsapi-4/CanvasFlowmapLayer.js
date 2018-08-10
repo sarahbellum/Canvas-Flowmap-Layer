@@ -2,23 +2,26 @@ define([
   'esri/layers/Layer',
   'esri/views/2d/layers/BaseLayerView2D',
   'esri/geometry/Point',
-  'esri/geometry/support/webMercatorUtils'
+  'esri/geometry/support/webMercatorUtils',
+  'esri/core/Collection'
 ], function(
   Layer,
   BaseLayerView2D,
   Point,
-  webMercatorUtils
+  webMercatorUtils,
+  Collection
 ) {
   /*
-    PART A: custom layer view
-  */
+      PART A: custom layer view, which is used by the custom layer in PART B
+      https://developers.arcgis.com/javascript/latest/api-reference/esri-views-2d-layers-BaseLayerView2D.html
+    */
   var CustomLayerView = BaseLayerView2D.createSubclass({
     render: function(renderParameters) {
-      this._drawAllCanvasPoints(renderParameters.context, renderParameters.state);
-      this._drawAllCanvasPaths(renderParameters.context, renderParameters.state);
+      this._drawAllCanvasPoints(renderParameters);
+      this._drawAllCanvasPaths(renderParameters);
     },
 
-    _drawAllCanvasPoints: function(ctx, state) {
+    _drawAllCanvasPoints: function(renderParameters) {
       // re-draw only 1 copy of each unique ORIGIN or DESTINATION point using the canvas
       // and add the unique value value to the appropriate array for tracking and comparison
 
@@ -45,9 +48,9 @@ define([
           return;
         }
 
-        var screenCoordinates = this._convertMapPointToScreenCoordinates(graphic.geometry, state);
+        var screenCoordinates = this._convertMapPointToScreenCoordinates(graphic.geometry, renderParameters.state);
 
-        this._applyCanvasPointSymbol(ctx, symbolObject, screenCoordinates);
+        this._applyCanvasPointSymbol(renderParameters.context, symbolObject, screenCoordinates);
       }, this);
     },
 
@@ -64,19 +67,11 @@ define([
       ctx.closePath();
     },
 
-    _drawAllCanvasPaths: function(ctx, state) {
+    _drawAllCanvasPaths: function(renderParameters) {
       this.layer.graphics.forEach(function(graphic) {
         var attributes = graphic.attributes;
 
-        // TODO: wire up being able to select specific O-D relationships for line drawing
-
-        // if (!attributes._isSelectedForPathDisplay) {
-        //   return;
-        // }
-
-        // TODO: for now, just draw "one half" of all O-D graphics
-        // and hard-code the Alexandria, Egypt O-D example
-        if (!attributes._isOrigin || [1].indexOf(attributes.s_city_id) === -1) {
+        if (!attributes._isSelectedForPathDisplay) {
           return;
         }
 
@@ -93,10 +88,10 @@ define([
           spatialReference: graphic.geometry.spatialReference
         });
 
-        var screenOriginCoordinates = this._convertMapPointToScreenCoordinates(originPoint, state);
-        var screenDestinationCoordinates = this._convertMapPointToScreenCoordinates(destinationPoint, state);
+        var screenOriginCoordinates = this._convertMapPointToScreenCoordinates(originPoint, renderParameters.state);
+        var screenDestinationCoordinates = this._convertMapPointToScreenCoordinates(destinationPoint, renderParameters.state);
 
-        this._applyCanvasLineSymbol(ctx, this.layer.symbols.flowline, screenOriginCoordinates, screenDestinationCoordinates);
+        this._applyCanvasLineSymbol(renderParameters.context, this.layer.symbols.flowline, screenOriginCoordinates, screenDestinationCoordinates);
       }, this);
     },
 
@@ -117,6 +112,10 @@ define([
       ctx.closePath();
     },
 
+    /*
+    GEOMETRY METHODS
+    */
+
     _convertMapPointToScreenCoordinates: function(mapPoint, rendererState) {
       var mapPoint = mapPoint.spatialReference.isGeographic
         ? webMercatorUtils.geographicToWebMercator(mapPoint)
@@ -129,12 +128,112 @@ define([
       }
 
       return screenPoint;
-    }
+    },
+
+    // TODO: wrap around +/- 180?
+
+    /*
+    SELECTION/INTERACTION METHODS
+    */
+
+    selectGraphicsForPathDisplayById: function(uniqueOriginOrDestinationIdField, idValue, originBoolean, selectionMode) {
+      if (
+        uniqueOriginOrDestinationIdField !== this.layer.originAndDestinationFieldIds.originUniqueIdField &&
+          uniqueOriginOrDestinationIdField !== this.layer.originAndDestinationFieldIds.destinationUniqueIdField
+      ) {
+        console.error(
+          'Invalid unique id field supplied for origin or destination. It must be one of these: ' +
+            this.layer.originAndDestinationFieldIds.originUniqueIdField +
+            ', ' +
+            this.layer.originAndDestinationFieldIds.destinationUniqueIdField
+        );
+
+        return;
+      }
+
+      var existingOriginOrDestinationGraphic = this.layer.graphics.find(function(graphic) {
+        return graphic.attributes._isOrigin === originBoolean &&
+            graphic.attributes[uniqueOriginOrDestinationIdField] === idValue;
+      });
+
+      var odInfo = this._getSharedOriginOrDestinationGraphics(existingOriginOrDestinationGraphic);
+
+      if (odInfo.isOriginGraphic) {
+        this.selectGraphicsForPathDisplay(odInfo.sharedOriginGraphics, selectionMode);
+      } else {
+        this.selectGraphicsForPathDisplay(odInfo.sharedDestinationGraphics, selectionMode);
+      }
+    },
+
+    selectGraphicsForPathDisplay: function(selectionGraphics, selectionMode) {
+      var selectionIds = selectionGraphics.map(function(graphic) {
+        return graphic.attributes._uniqueId;
+      });
+
+      if (selectionMode === 'SELECTION_NEW') {
+        this.layer.graphics.forEach(function(graphic) {
+          if (selectionIds.indexOf(graphic.attributes._uniqueId) > -1) {
+            graphic.attributes._isSelectedForPathDisplay = true;
+          } else {
+            graphic.attributes._isSelectedForPathDisplay = false;
+          }
+        });
+      } else if (selectionMode === 'SELECTION_ADD') {
+        this.layer.graphics.forEach(function(graphic) {
+          if (selectionIds.indexOf(graphic.attributes._uniqueId) > -1) {
+            graphic.attributes._isSelectedForPathDisplay = true;
+          }
+        });
+      } else if (selectionMode === 'SELECTION_SUBTRACT') {
+        this.layer.graphics.forEach(function(graphic) {
+          if (selectionIds.indexOf(graphic.attributes._uniqueId) > -1) {
+            graphic.attributes._isSelectedForPathDisplay = false;
+          }
+        });
+      } else {
+        return;
+      }
+
+      // https://developers.arcgis.com/javascript/latest/api-reference/esri-views-2d-layers-BaseLayerView2D.html#requestRender
+      this.requestRender();
+    },
+
+    _getSharedOriginOrDestinationGraphics: function(testGraphic) {
+      var isOriginGraphic = testGraphic.attributes._isOrigin;
+      var sharedOriginGraphics = [];
+      var sharedDestinationGraphics = [];
+
+      if (isOriginGraphic) {
+        // for an ORIGIN point that was interacted with,
+        // make an array of all other ORIGIN graphics with the same ORIGIN ID field
+        var originUniqueIdField = this.layer.originAndDestinationFieldIds.originUniqueIdField;
+        var testGraphicOriginId = testGraphic.attributes[originUniqueIdField];
+        sharedOriginGraphics = this.layer.graphics.filter(function(graphic) {
+          return graphic.attributes._isOrigin &&
+              graphic.attributes[originUniqueIdField] === testGraphicOriginId;
+        });
+      } else {
+        // for a DESTINATION point that was interacted with,
+        // make an array of all other ORIGIN graphics with the same DESTINATION ID field
+        var destinationUniqueIdField = this.layer.originAndDestinationFieldIds.destinationUniqueIdField;
+        var testGraphicDestinationId = testGraphic.attributes[destinationUniqueIdField];
+        sharedDestinationGraphics = this.layer.graphics.filter(function(graphic) {
+          return graphic.attributes._isOrigin &&
+              graphic.attributes[destinationUniqueIdField] === testGraphicDestinationId;
+        });
+      }
+
+      return {
+        isOriginGraphic: isOriginGraphic, // Boolean
+        sharedOriginGraphics: sharedOriginGraphics, // Array of graphics
+        sharedDestinationGraphics: sharedDestinationGraphics // Array of graphics
+      };
+    },
   });
 
-  /*
-    PART B: custom layer, which makes use of custom layer view from PART A
-  */
+    /*
+      PART B: custom layer, which makes use of the custom layer view in PART A
+    */
   var CustomLayer = Layer.createSubclass({
     declaredClass: 'esri.layers.CanvasFlowmapLayer',
 
@@ -184,39 +283,52 @@ define([
         shadowBlur: 1.5
       }
     },
-    
-    createLayerView: function(view) {
-      if (view.type === '2d') {
-        // convert single set of graphics into array of
-        // individual origin and destination graphics
-        this._convertOriginAndDestinationGraphics();
 
-        // here the pieces are all glued together
-        // with an instance of the custom layer view
-        return new CustomLayerView({
-          view: view,
-          layer: this
-        });
+    createLayerView: function(view) {
+      if (view.type !== '2d') {
+        return;
       }
+
+      // convert the original array of graphics into a combined array Collection of
+      // individual origin and destination graphics (i.e. 2x the original array)
+      this.graphics = this._convertToOriginAndDestinationGraphics(this.graphics, this.originAndDestinationFieldIds);
+
+      // here the pieces are all glued together
+      // with an instance of the custom layer view
+      return new CustomLayerView({
+        view: view,
+        layer: this
+      });
     },
 
-    _convertOriginAndDestinationGraphics: function() {
-      this.graphics.forEach(function(originGraphic, idx, graphicsArray) {
+    _convertToOriginAndDestinationGraphics: function(originalGraphicsArray, originAndDestinationFieldIds) {
+      // var originAndDestinationGraphics = [];
+
+      var originAndDestinationGraphics = new Collection();
+
+      originalGraphicsArray.forEach(function(originGraphic, index) {
         // origin graphic
         originGraphic.attributes._isOrigin = true;
+        originGraphic.attributes._isSelectedForPathDisplay = false;
+        originGraphic.attributes._uniqueId = index + '_o';
 
         // destination graphic
         var destinationGraphic = originGraphic.clone();
         destinationGraphic.attributes._isOrigin = false;
+        destinationGraphic.attributes._isSelectedForPathDisplay = false;
+        destinationGraphic.attributes._uniqueId = index + '_d';
         destinationGraphic.geometry = {
           type: 'point',
-          x: destinationGraphic.attributes[this.originAndDestinationFieldIds.destinationGeometry.x],
-          y: destinationGraphic.attributes[this.originAndDestinationFieldIds.destinationGeometry.y],
-          spatialReference: this.originAndDestinationFieldIds.destinationGeometry.spatialReference
+          x: destinationGraphic.attributes[originAndDestinationFieldIds.destinationGeometry.x],
+          y: destinationGraphic.attributes[originAndDestinationFieldIds.destinationGeometry.y],
+          spatialReference: originAndDestinationFieldIds.destinationGeometry.spatialReference
         };
 
-        graphicsArray.push(destinationGraphic);
-      }, this);
+        originAndDestinationGraphics.push(originGraphic);
+        originAndDestinationGraphics.push(destinationGraphic);
+      });
+
+      return originAndDestinationGraphics;
     }
   });
 
