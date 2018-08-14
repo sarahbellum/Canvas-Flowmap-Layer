@@ -2,13 +2,13 @@ define([
   'esri/layers/Layer',
   'esri/views/2d/layers/BaseLayerView2D',
   'esri/geometry/Point',
-  'esri/geometry/support/webMercatorUtils',
+  'esri/geometry/projection',
   'esri/core/Collection'
 ], function(
   Layer,
   BaseLayerView2D,
   Point,
-  webMercatorUtils,
+  projection,
   Collection
 ) {
   /*
@@ -17,8 +17,8 @@ define([
     */
   var CustomLayerView = BaseLayerView2D.createSubclass({
     render: function(renderParameters) {
-      this._drawAllCanvasPoints(renderParameters);
       this._drawAllCanvasPaths(renderParameters);
+      this._drawAllCanvasPoints(renderParameters);
     },
 
     _drawAllCanvasPoints: function(renderParameters) {
@@ -75,20 +75,15 @@ define([
           return;
         }
 
-        // origin and destination points for drawing curved lines
-        var originPoint = new Point({
-          x: attributes[this.layer.originAndDestinationFieldIds.originGeometry.x],
-          y: attributes[this.layer.originAndDestinationFieldIds.originGeometry.y],
-          spatialReference: graphic.geometry.spatialReference
-        });
-
-        var destinationPoint = new Point({
-          x: attributes[this.layer.originAndDestinationFieldIds.destinationGeometry.x],
-          y: attributes[this.layer.originAndDestinationFieldIds.destinationGeometry.y],
-          spatialReference: graphic.geometry.spatialReference
-        });
+        // origin and destination points converted to screen coordinates for drawing curved Bezier paths
+        var originPoint = graphic.geometry;
 
         var screenOriginCoordinates = this._convertMapPointToScreenCoordinates(originPoint, renderParameters.state);
+        
+        var destinationPoint = this.layer.graphics.find(function(g) {
+          return g.attributes._uniqueId === attributes._uniqueId.split('_')[0] + '_d';
+        }).geometry;
+
         var screenDestinationCoordinates = this._convertMapPointToScreenCoordinates(destinationPoint, renderParameters.state);
 
         this._applyCanvasLineSymbol(renderParameters.context, this.layer.symbols.flowline, screenOriginCoordinates, screenDestinationCoordinates);
@@ -115,22 +110,34 @@ define([
     /*
     GEOMETRY METHODS
     */
+    
+    _pointGeometryToWrappedAroundXY: function(geometryPoint, rendererState) {     
+      var wrappedAroundXY = [geometryPoint.x, geometryPoint.y]
+      
+      // rendererState.center[0] provides info on how far east or west we have rotated around the world,
+      // including **how many times** we have rotated around the world
+      // in other words: this property is NOT limited to only +/-180 degrees of longitude
+      var wrapAroundDiff = rendererState.center[0] - wrappedAroundXY[0];
 
-    _convertMapPointToScreenCoordinates: function(mapPoint, rendererState) {
-      var mapPoint = mapPoint.spatialReference.isGeographic
-        ? webMercatorUtils.geographicToWebMercator(mapPoint)
-        : mapPoint;
-
-      var screenPoint = [0, 0];
-
-      if (rendererState && rendererState.toScreen) {
-        rendererState.toScreen(screenPoint, mapPoint.x, mapPoint.y);
+      if (
+        wrapAroundDiff < this.layer._worldMinX ||
+        wrapAroundDiff > this.layer._worldMaxX
+      ) {
+        var worldWidth = this.layer._worldWidth;
+        var numberOfWrappedWorlds = Math.round(wrapAroundDiff / worldWidth) * worldWidth;
+        wrappedAroundXY[0] += numberOfWrappedWorlds;
       }
 
-      return screenPoint;
+      return wrappedAroundXY;
     },
 
-    // TODO: wrap around +/- 180?
+    _convertMapPointToScreenCoordinates: function(mapPoint, rendererState) {
+      var wrappedAroundXY = this._pointGeometryToWrappedAroundXY(mapPoint, rendererState);
+
+      var screenCoordinates = rendererState.toScreen([0, 0], wrappedAroundXY[0], wrappedAroundXY[1]);
+
+      return screenCoordinates;
+    },
 
     /*
     SELECTION/INTERACTION METHODS
@@ -231,13 +238,16 @@ define([
     },
   });
 
-    /*
-      PART B: custom layer, which makes use of the custom layer view in PART A
-    */
+  /*
+    PART B: custom layer, which makes use of the custom layer view in PART A
+  */
   var CustomLayer = Layer.createSubclass({
     declaredClass: 'esri.layers.CanvasFlowmapLayer',
 
     graphics: [],
+    _worldMinX: null,
+    _worldMaxX: null,
+    _worldWidth: null,
 
     originAndDestinationFieldIds: {
       originUniqueIdField: 'start_id',
@@ -289,21 +299,47 @@ define([
         return;
       }
 
-      // convert the original array of graphics into a combined array Collection of
-      // individual origin and destination graphics (i.e. 2x the original array)
-      this.graphics = this._convertToOriginAndDestinationGraphics(this.graphics, this.originAndDestinationFieldIds);
+      return projection
+        .load()
+        .then(function() {
+          // -180 if WGS84
+          this._worldMinX = projection.project(new Point({
+            x: -180,
+            y: 0,
+            spatialReference: {
+              wkid: 4326
+            }
+          }), view.spatialReference).x;
+          
+          // +180 if WGS84
+          this._worldMaxX = projection.project(new Point({
+            x: 180,
+            y: 0,
+            spatialReference: {
+              wkid: 4326
+            }
+          }), view.spatialReference).x;
+          this._worldMaxX = -this._worldMinX;
 
-      // here the pieces are all glued together
-      // with an instance of the custom layer view
-      return new CustomLayerView({
-        view: view,
-        layer: this
-      });
+          // 360 if WGS84
+          this._worldWidth = this._worldMaxX - this._worldMinX;
+
+          // convert the constructor's array of graphics into a combined array Collection of
+          // individual origin graphics AND destination graphics (i.e. 2x the original array length)
+          // these will also be projected into the view's spatial reference
+          this.graphics = this._convertToOriginAndDestinationGraphics(this.graphics, this.originAndDestinationFieldIds, view);
+    
+          // here the PART A and PART B pieces are glued together
+          // with an instance of the custom layer view
+          return new CustomLayerView({
+            view: view,
+            layer: this
+          });
+        }.bind(this));
+
     },
 
-    _convertToOriginAndDestinationGraphics: function(originalGraphicsArray, originAndDestinationFieldIds) {
-      // var originAndDestinationGraphics = [];
-
+    _convertToOriginAndDestinationGraphics: function(originalGraphicsArray, originAndDestinationFieldIds, view) {
       var originAndDestinationGraphics = new Collection();
 
       originalGraphicsArray.forEach(function(originGraphic, index) {
@@ -311,18 +347,18 @@ define([
         originGraphic.attributes._isOrigin = true;
         originGraphic.attributes._isSelectedForPathDisplay = false;
         originGraphic.attributes._uniqueId = index + '_o';
+        originGraphic.geometry = projection.project(originGraphic.geometry, view.spatialReference);
 
         // destination graphic
         var destinationGraphic = originGraphic.clone();
         destinationGraphic.attributes._isOrigin = false;
         destinationGraphic.attributes._isSelectedForPathDisplay = false;
         destinationGraphic.attributes._uniqueId = index + '_d';
-        destinationGraphic.geometry = {
-          type: 'point',
+        destinationGraphic.geometry = projection.project(new Point({
           x: destinationGraphic.attributes[originAndDestinationFieldIds.destinationGeometry.x],
           y: destinationGraphic.attributes[originAndDestinationFieldIds.destinationGeometry.y],
           spatialReference: originAndDestinationFieldIds.destinationGeometry.spatialReference
-        };
+        }), view.spatialReference);
 
         originAndDestinationGraphics.push(originGraphic);
         originAndDestinationGraphics.push(destinationGraphic);

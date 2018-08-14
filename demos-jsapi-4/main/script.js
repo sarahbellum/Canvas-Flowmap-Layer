@@ -4,21 +4,35 @@ require([
   'esri/Map',
   'esri/views/MapView',
   'esri/widgets/Compass',
+  'esri/Basemap',
+  'esri/layers/VectorTileLayer',
   'dojo/domReady!'
 ], function(
   CanvasFlowmapLayer,
   Graphic,
   EsriMap,
   MapView,
-  Compass
+  Compass,
+  Basemap,
+  VectorTileLayer
 ) {
   var view = new MapView({
     container: 'viewDiv',
     map: new EsriMap({
+      // test with Web Mercator map projection
       basemap: 'dark-gray-vector'
+      
+      // test with WGS84 map projection
+      // basemap: new Basemap({
+      //   baseLayers: [
+      //     new VectorTileLayer({
+      //       url: 'http://www.arcgis.com/sharing/rest/content/items/55253142ea534123882314f0d880ddab/resources/styles/root.json'
+      //     })
+      //   ]
+      // })
     }),
     zoom: 2,
-    center: [29.94999589, 31.20001935]
+    center: [0, 20]
   });
 
   view.ui.add(new Compass({
@@ -47,7 +61,10 @@ require([
         });
 
         var canvasFlowmapLayer = new CanvasFlowmapLayer({
+          // array of Graphics
           graphics: graphicsFromCsvRows,
+
+          // information about the uniqe origin-destinatino fields and geometries
           originAndDestinationFieldIds: {
             originUniqueIdField: 's_city_id',
             originGeometry: {
