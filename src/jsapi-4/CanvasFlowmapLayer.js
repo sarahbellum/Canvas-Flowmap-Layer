@@ -139,8 +139,7 @@ define([
           wrapAroundDiff > this.layer._worldMaxX
         ) {
           var worldWidth = this.layer._worldWidth;
-          var numberOfWrappedWorlds = Math.round(wrapAroundDiff / worldWidth) * worldWidth;
-          wrappedMapCoordinates[0] += numberOfWrappedWorlds;
+          wrappedMapCoordinates[0] = wrappedMapCoordinates[0] + (Math.round(wrapAroundDiff / worldWidth) * worldWidth);
         }
       }
 
