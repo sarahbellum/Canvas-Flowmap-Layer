@@ -5,6 +5,7 @@ require([
   'esri/views/MapView',
   'esri/widgets/Compass',
   'esri/Basemap',
+  'esri/layers/TileLayer',
   'esri/layers/VectorTileLayer',
   'dojo/domReady!'
 ], function(
@@ -14,6 +15,7 @@ require([
   MapView,
   Compass,
   Basemap,
+  TileLayer,
   VectorTileLayer
 ) {
   var view = new MapView({
@@ -30,9 +32,18 @@ require([
       //     })
       //   ]
       // })
+
+      // test with Albers 102003 map projection
+      // basemap: new Basemap({
+      //   baseLayers: [
+      //     new TileLayer({
+      //       url: 'http://tiles.arcgis.com/tiles/nGt4QxSblgDfeJn9/arcgis/rest/services/Dark_Gray_Albers_North_America_Base/MapServer'
+      //     })
+      //   ]
+      // })
     }),
-    zoom: 2,
-    center: [0, 20]
+    // zoom: 2,
+    // center: [0, 20]
   });
 
   view.ui.add(new Compass({
