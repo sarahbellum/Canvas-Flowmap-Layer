@@ -12,13 +12,55 @@ define([
   Collection
 ) {
   /*
-      PART A: custom layer view, which is used by the custom layer in PART B
-      https://developers.arcgis.com/javascript/latest/api-reference/esri-views-2d-layers-BaseLayerView2D.html
-    */
+    PART A:
+    custom layer view, which is used by the custom layer in PART B
+    https://developers.arcgis.com/javascript/latest/api-reference/esri-views-2d-layers-BaseLayerView2D.html
+  */
   var CustomLayerView = BaseLayerView2D.createSubclass({
+    /*
+      CANVAS RENDERING METHODS
+    */
     render: function(renderParameters) {
       this._drawAllCanvasPaths(renderParameters);
       this._drawAllCanvasPoints(renderParameters);
+    },
+
+    _drawAllCanvasPaths: function(renderParameters) {
+      this.layer.graphics.forEach(function(graphic) {
+        if (!graphic.attributes._isSelectedForPathDisplay) {
+          return;
+        }
+
+        // origin and destination points converted to screen coordinates for drawing curved Bezier paths
+        var originPoint = graphic.geometry;
+
+        var destinationPoint = this.layer.graphics.find(function(graphicToFind) {
+          return graphicToFind.attributes._uniqueId === graphic.attributes._uniqueId.split('_')[0] + '_d';
+        }).geometry;
+        
+        var screenOriginCoordinates = this._convertMapPointToScreenCoordinates(originPoint, renderParameters.state);
+
+        var screenDestinationCoordinates = this._convertMapPointToScreenCoordinates(destinationPoint, renderParameters.state);
+
+        this._applyCanvasPathSymbol(renderParameters.context, this.layer.symbols.flowline, screenOriginCoordinates, screenDestinationCoordinates);
+      }, this);
+    },
+
+    _applyCanvasPathSymbol: function(ctx, symbolObject, screenOriginCoordinates, screenDestinationCoordinates) {
+      ctx.beginPath();
+      ctx.lineCap = symbolObject.lineCap;
+      ctx.lineWidth = symbolObject.lineWidth;
+      ctx.strokeStyle = symbolObject.strokeStyle;
+      ctx.shadowBlur = symbolObject.shadowBlur;
+      ctx.shadowColor = symbolObject.shadowColor;
+      ctx.moveTo(screenOriginCoordinates[0], screenOriginCoordinates[1]); // start point
+      ctx.bezierCurveTo(
+        screenOriginCoordinates[0], screenDestinationCoordinates[1], // control point
+        screenDestinationCoordinates[0], screenDestinationCoordinates[1], // control point
+        screenDestinationCoordinates[0], screenDestinationCoordinates[1] // end point
+      );
+      ctx.stroke();
+      ctx.closePath();
     },
 
     _drawAllCanvasPoints: function(renderParameters) {
@@ -67,82 +109,47 @@ define([
       ctx.closePath();
     },
 
-    _drawAllCanvasPaths: function(renderParameters) {
-      this.layer.graphics.forEach(function(graphic) {
-        var attributes = graphic.attributes;
-
-        if (!attributes._isSelectedForPathDisplay) {
-          return;
-        }
-
-        // origin and destination points converted to screen coordinates for drawing curved Bezier paths
-        var originPoint = graphic.geometry;
-
-        var screenOriginCoordinates = this._convertMapPointToScreenCoordinates(originPoint, renderParameters.state);
-        
-        var destinationPoint = this.layer.graphics.find(function(g) {
-          return g.attributes._uniqueId === attributes._uniqueId.split('_')[0] + '_d';
-        }).geometry;
-
-        var screenDestinationCoordinates = this._convertMapPointToScreenCoordinates(destinationPoint, renderParameters.state);
-
-        this._applyCanvasLineSymbol(renderParameters.context, this.layer.symbols.flowline, screenOriginCoordinates, screenDestinationCoordinates);
-      }, this);
-    },
-
-    _applyCanvasLineSymbol: function(ctx, symbolObject, screenOriginCoordinates, screenDestinationCoordinates) {
-      ctx.beginPath();
-      ctx.lineCap = symbolObject.lineCap;
-      ctx.lineWidth = symbolObject.lineWidth;
-      ctx.strokeStyle = symbolObject.strokeStyle;
-      ctx.shadowBlur = symbolObject.shadowBlur;
-      ctx.shadowColor = symbolObject.shadowColor;
-      ctx.moveTo(screenOriginCoordinates[0], screenOriginCoordinates[1]); // start point
-      ctx.bezierCurveTo(
-        screenOriginCoordinates[0], screenDestinationCoordinates[1], // control point
-        screenDestinationCoordinates[0], screenDestinationCoordinates[1], // control point
-        screenDestinationCoordinates[0], screenDestinationCoordinates[1] // end point
-      );
-      ctx.stroke();
-      ctx.closePath();
-    },
-
     /*
-    GEOMETRY METHODS
+      GEOMETRY TO CANVAS HELPER METHODS
     */
-    
-    _pointGeometryToWrappedAroundXY: function(geometryPoint, rendererState) {     
-      var wrappedAroundXY = [geometryPoint.x, geometryPoint.y]
-      
-      // rendererState.center[0] provides info on how far east or west we have rotated around the world,
-      // including **how many times** we have rotated around the world
-      // in other words: this property is NOT limited to only +/-180 degrees of longitude
-      var wrapAroundDiff = rendererState.center[0] - wrappedAroundXY[0];
-
-      if (
-        wrapAroundDiff < this.layer._worldMinX ||
-        wrapAroundDiff > this.layer._worldMaxX
-      ) {
-        var worldWidth = this.layer._worldWidth;
-        var numberOfWrappedWorlds = Math.round(wrapAroundDiff / worldWidth) * worldWidth;
-        wrappedAroundXY[0] += numberOfWrappedWorlds;
-      }
-
-      return wrappedAroundXY;
-    },
-
     _convertMapPointToScreenCoordinates: function(mapPoint, rendererState) {
-      var wrappedAroundXY = this._pointGeometryToWrappedAroundXY(mapPoint, rendererState);
+      // attempt to wrap around the world
+      // but no matter what, end up with [x, y] map coordinates array
+      var mapCoordinates = this._pointGeometryToWrappedMapCoordinates(mapPoint, rendererState);
 
-      var screenCoordinates = rendererState.toScreen([0, 0], wrappedAroundXY[0], wrappedAroundXY[1]);
+      // convert [x, y] map coordinates array to screen coordinates array
+      var screenCoordinates = rendererState.toScreen([0, 0], mapCoordinates[0], mapCoordinates[1]);
 
       return screenCoordinates;
     },
 
-    /*
-    SELECTION/INTERACTION METHODS
-    */
+    _pointGeometryToWrappedMapCoordinates: function(geometryPoint, rendererState) {
+      // attempt to wrap around the world if possible and necessary
+      // otherwise, simply return the [x, y] map coordinates array
+      var wrappedMapCoordinates = [geometryPoint.x, geometryPoint.y]
 
+      if (this.view.spatialReference.isWrappable) {
+        // rendererState.center[0] provides info on how far east or west we have rotated around the world,
+        // including **how many times** we have rotated around the world
+        // in other words: this property is NOT limited to only +/-180 degrees of longitude
+        var wrapAroundDiff = rendererState.center[0] - wrappedMapCoordinates[0];
+  
+        if (
+          wrapAroundDiff < this.layer._worldMinX ||
+          wrapAroundDiff > this.layer._worldMaxX
+        ) {
+          var worldWidth = this.layer._worldWidth;
+          var numberOfWrappedWorlds = Math.round(wrapAroundDiff / worldWidth) * worldWidth;
+          wrappedMapCoordinates[0] += numberOfWrappedWorlds;
+        }
+      }
+
+      return wrappedMapCoordinates;
+    },
+
+    /*
+      USER SELECTION AND INTERACTION METHODS
+    */
     selectGraphicsForPathDisplayById: function(uniqueOriginOrDestinationIdField, idValue, originBoolean, selectionMode) {
       if (
         uniqueOriginOrDestinationIdField !== this.layer.originAndDestinationFieldIds.originUniqueIdField &&
@@ -239,7 +246,8 @@ define([
   });
 
   /*
-    PART B: custom layer, which makes use of the custom layer view in PART A
+    PART B:
+    custom layer, which makes use of the custom layer view in PART A
   */
   var CustomLayer = Layer.createSubclass({
     declaredClass: 'esri.layers.CanvasFlowmapLayer',
@@ -302,27 +310,29 @@ define([
       return projection
         .load()
         .then(function() {
-          // -180 if WGS84
-          this._worldMinX = projection.project(new Point({
-            x: -180,
-            y: 0,
-            spatialReference: {
-              wkid: 4326
-            }
-          }), view.spatialReference).x;
-          
-          // +180 if WGS84
-          this._worldMaxX = projection.project(new Point({
-            x: 180,
-            y: 0,
-            spatialReference: {
-              wkid: 4326
-            }
-          }), view.spatialReference).x;
-          this._worldMaxX = -this._worldMinX;
-
-          // 360 if WGS84
-          this._worldWidth = this._worldMaxX - this._worldMinX;
+          if (view.spatialReference.isWrappable) {
+            // -180 if WGS84
+            this._worldMinX = projection.project(new Point({
+              x: -180,
+              y: 0,
+              spatialReference: {
+                wkid: 4326
+              }
+            }), view.spatialReference).x;
+            
+            // +180 if WGS84
+            // this._worldMaxX = projection.project(new Point({
+            //   x: 180,
+            //   y: 0,
+            //   spatialReference: {
+            //     wkid: 4326
+            //   }
+            // }), view.spatialReference).x;
+            this._worldMaxX = -this._worldMinX;
+  
+            // 360 if WGS84
+            this._worldWidth = this._worldMaxX - this._worldMinX;
+          }
 
           // convert the constructor's array of graphics into a combined array Collection of
           // individual origin graphics AND destination graphics (i.e. 2x the original array length)
@@ -347,6 +357,7 @@ define([
         originGraphic.attributes._isOrigin = true;
         originGraphic.attributes._isSelectedForPathDisplay = false;
         originGraphic.attributes._uniqueId = index + '_o';
+
         originGraphic.geometry = projection.project(originGraphic.geometry, view.spatialReference);
 
         // destination graphic
@@ -354,6 +365,7 @@ define([
         destinationGraphic.attributes._isOrigin = false;
         destinationGraphic.attributes._isSelectedForPathDisplay = false;
         destinationGraphic.attributes._uniqueId = index + '_d';
+
         destinationGraphic.geometry = projection.project(new Point({
           x: destinationGraphic.attributes[originAndDestinationFieldIds.destinationGeometry.x],
           y: destinationGraphic.attributes[originAndDestinationFieldIds.destinationGeometry.y],
