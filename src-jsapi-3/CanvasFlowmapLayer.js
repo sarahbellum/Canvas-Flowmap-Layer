@@ -37,7 +37,7 @@ define([
       */
 
       // canvas symbol properties are based on Esri REST API simple renderer and unique value renderer specifications
-      // http://resources.arcgis.com/en/help/arcgis-rest-api/#/Renderer_objects/02r30000019t000000/
+      // https://resources.arcgis.com/en/help/arcgis-rest-api/#/Renderer_objects/02r30000019t000000/
       // "type" can be:
       //    - simple renderer
       //    - unique values renderer

@@ -3,21 +3,31 @@ require([
   'esri/Graphic',
   'esri/Map',
   'esri/views/MapView',
+  'esri/Basemap',
+  'esri/layers/VectorTileLayer',
   'dojo/domReady!'
 ], function(
   CanvasFlowmapLayer,
   Graphic,
   EsriMap,
-  MapView
+  MapView,
+  Basemap,
+  VectorTileLayer
 ) {
   var view = new MapView({
     container: 'viewDiv',
     map: new EsriMap({
-      // use a standard Web Mercator map projection
-      basemap: 'dark-gray-vector'
+      // use a basemap with a WGS84 map projection
+      basemap: new Basemap({
+        baseLayers: [
+          new VectorTileLayer({
+            url: 'https://www.arcgis.com/sharing/rest/content/items/55253142ea534123882314f0d880ddab/resources/styles/root.json'
+          })
+        ]
+      })
     }),
-    // zoom: 2,
-    // center: [0, 20]
+    zoom: 2,
+    center: [80, 0],
     ui: {
       components: ['zoom', 'attribution', 'compass']
     }
@@ -77,38 +87,13 @@ require([
           // automatically select a few ORIGIN locations for path display
           // in order to demonstrate the flowmap functionality,
           // without being overwhelming and showing all O-D relationships
-
-          // Reykjavík
-          layerView.selectGraphicsForPathDisplayById('s_city_id', 562, true, 'SELECTION_NEW');
           
           // Alexandria
-          layerView.selectGraphicsForPathDisplayById('s_city_id', 1, true, 'SELECTION_ADD');
+          layerView.selectGraphicsForPathDisplayById('s_city_id', 1, true, 'SELECTION_NEW');
 
           // Tokyo
           layerView.selectGraphicsForPathDisplayById('s_city_id', 642, true, 'SELECTION_ADD');
         });
-
-        // TODO: in JSAPI v4 this custom layer needs to be able to support a view.hitTest
-        // https://developers.arcgis.com/javascript/latest/api-reference/esri-views-MapView.html#hitTest
-
-        // NOTE: in JSAPI v3 we just wired up a click listener like so:
-
-        // canvasFlowmapLayer.on('click', function(evt) {
-        //   // evt.sharedOriginGraphics: array of all ORIGIN graphics with the same ORIGIN ID field
-        //   // evt.sharedDestinationGraphics: array of all ORIGIN graphics with the same DESTINATION ID field
-        //   //  - you can mark shared origin or destination graphics as selected for path display using these modes:
-        //   //    - 'SELECTION_NEW', 'SELECTION_ADD', or 'SELECTION_SUBTRACT'
-        //   //  - these selected graphics inform the canvas flowmap layer which paths to display
-      
-        //   // NOTE: if the layer's pathDisplayMode was originally set to "all",
-        //   // this manual selection will override the displayed paths
-        //   if (evt.sharedOriginGraphics.length) {
-        //     canvasFlowmapLayer.selectGraphicsForPathDisplay(evt.sharedOriginGraphics, 'SELECTION_NEW');
-        //   }
-        //   if (evt.sharedDestinationGraphics.length) {
-        //     canvasFlowmapLayer.selectGraphicsForPathDisplay(evt.sharedDestinationGraphics, 'SELECTION_NEW');
-        //   }
-        // });
       }
     });
   });

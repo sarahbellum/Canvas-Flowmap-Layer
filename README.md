@@ -4,6 +4,8 @@ The **Canvas-Flowmap-Layer** extends the [ArcGIS API for JavaScript](https://dev
 
 If you are looking for LeafletJS support, there is a **Canvas-Flowmap-Layer** plugin available at [jwasilgeo/Leaflet.Canvas-Flowmap-Layer](https://www.github.com/jwasilgeo/Leaflet.Canvas-Flowmap-Layer).
 
+Check out our [presentation from **NACIS 2017**](https://www.youtube.com/watch?v=cRPx-BfBtv0).
+
 ## Table of Contents
 
 - [Demos](#demos)
@@ -31,9 +33,7 @@ Esri JSAPI v3
 - [Simple demo](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-3/main)
 - [Feature comparison / sandbox demo](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-3/comparison/)
 
-Check out our [presentation from **NACIS 2017**](https://www.youtube.com/watch?v=cRPx-BfBtv0).
-
-## Supported Web Mapping Libraries
+## Supported JavaScript Web Mapping Libraries
 
 Detailed documentation for Esri JSAPI v4 is available at [README-JSAPI-4](./README-JSAPI-4.md).
 
@@ -97,7 +97,7 @@ For example, you could listen for a `click` event and then choose to either add 
 
 The Canvas-Flowmap-Layer has default symbology established for origin points, destination points, Bezier curves, and animated Bezier curves. You can change these defaults using the various symbol configuration objects (e.g. `originCircleProperties`, `destinationCircleProperties`, `pathProperties`, `animatePathProperties`, etc.).
 
-Symbol configurations are defined using property objects inspired by the [ArcGIS REST API renderer objects](http://resources.arcgis.com/en/help/arcgis-rest-api/#/Renderer_objects/02r30000019t000000/) specification. Simple, unique value, and class breaks are all supported but instead use canvas stroke and line style property names.
+Symbol configurations are defined using property objects inspired by the [ArcGIS REST API renderer objects](https://resources.arcgis.com/en/help/arcgis-rest-api/#/Renderer_objects/02r30000019t000000/) specification. Simple, unique value, and class breaks are all supported but instead use canvas stroke and line style property names.
 
 The [custom symbology examples](#custom-symbology-examples) in the API documentation below provide a starting point on how some of these configuration objects should be structured.
 

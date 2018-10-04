@@ -3,27 +3,47 @@ require([
   'esri/Graphic',
   'esri/Map',
   'esri/views/MapView',
+  'esri/Basemap',
+  'esri/layers/TileLayer',
   'dojo/domReady!'
 ], function(
   CanvasFlowmapLayer,
   Graphic,
   EsriMap,
-  MapView
+  MapView,
+  Basemap,
+  TileLayer
 ) {
   var view = new MapView({
     container: 'viewDiv',
     map: new EsriMap({
-      // use a standard Web Mercator map projection
-      basemap: 'dark-gray-vector'
+      // use a basemap with an Albers 102003 map projection
+      basemap: new Basemap({
+        baseLayers: [
+          new TileLayer({
+            url: 'https://tiles.arcgis.com/tiles/nGt4QxSblgDfeJn9/arcgis/rest/services/Dark_Gray_Albers_North_America_Base/MapServer'
+          })
+        ]
+      })
     }),
-    // zoom: 2,
-    // center: [0, 20]
+    extent: {
+      xmin: -2749287,
+      ymin: -1983352,
+      xmax: 3306971,
+      ymax: 2605315,
+      spatialReference: {
+        wkid: 102003
+      }
+    },
     ui: {
       components: ['zoom', 'attribution', 'compass']
     }
   });
 
   view.when(function() {
+    view.watch('extent', function() {
+      console.log(arguments[0].toJSON())
+    })
     // here we use Papa Parse to load and read the CSV data
     // we could have also used another library like D3js to do the same
     // Papa.parse('../csv-data/Flowmap_Cities_one_to_one.csv', {
@@ -78,37 +98,12 @@ require([
           // in order to demonstrate the flowmap functionality,
           // without being overwhelming and showing all O-D relationships
 
-          // Reykjavík
-          layerView.selectGraphicsForPathDisplayById('s_city_id', 562, true, 'SELECTION_NEW');
-          
-          // Alexandria
-          layerView.selectGraphicsForPathDisplayById('s_city_id', 1, true, 'SELECTION_ADD');
+          // Chicago
+          layerView.selectGraphicsForPathDisplayById('s_city_id', 128, true, 'SELECTION_NEW');
 
-          // Tokyo
-          layerView.selectGraphicsForPathDisplayById('s_city_id', 642, true, 'SELECTION_ADD');
+          // San Bernandino
+          layerView.selectGraphicsForPathDisplayById('s_city_id', 593, true, 'SELECTION_ADD');
         });
-
-        // TODO: in JSAPI v4 this custom layer needs to be able to support a view.hitTest
-        // https://developers.arcgis.com/javascript/latest/api-reference/esri-views-MapView.html#hitTest
-
-        // NOTE: in JSAPI v3 we just wired up a click listener like so:
-
-        // canvasFlowmapLayer.on('click', function(evt) {
-        //   // evt.sharedOriginGraphics: array of all ORIGIN graphics with the same ORIGIN ID field
-        //   // evt.sharedDestinationGraphics: array of all ORIGIN graphics with the same DESTINATION ID field
-        //   //  - you can mark shared origin or destination graphics as selected for path display using these modes:
-        //   //    - 'SELECTION_NEW', 'SELECTION_ADD', or 'SELECTION_SUBTRACT'
-        //   //  - these selected graphics inform the canvas flowmap layer which paths to display
-      
-        //   // NOTE: if the layer's pathDisplayMode was originally set to "all",
-        //   // this manual selection will override the displayed paths
-        //   if (evt.sharedOriginGraphics.length) {
-        //     canvasFlowmapLayer.selectGraphicsForPathDisplay(evt.sharedOriginGraphics, 'SELECTION_NEW');
-        //   }
-        //   if (evt.sharedDestinationGraphics.length) {
-        //     canvasFlowmapLayer.selectGraphicsForPathDisplay(evt.sharedDestinationGraphics, 'SELECTION_NEW');
-        //   }
-        // });
       }
     });
   });
