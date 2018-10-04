@@ -11,7 +11,9 @@
 
 ## Demos
 
-- [Simple demo](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-4/main)
+- [Simple demo (Web Mercator projection)](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-4/main)
+- [WGS84 projection demo](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-4/wgs84)
+- [Albers North America projection demo](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-4/albers-north-america)
 
 ## Developer API
 
