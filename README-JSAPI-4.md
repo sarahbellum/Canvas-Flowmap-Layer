@@ -11,9 +11,11 @@
 
 ## Demos
 
-- [Simple demo (Web Mercator projection)](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-4/main)
-- [WGS84 projection demo](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-4/wgs84)
-- [Albers North America projection demo](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-4/albers-north-america)
+- [Simple demo](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-4/main)
+- [Automatic rotation demo](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-4/rotate)
+- [Automatic world wrapping](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-4/world-wrap)
+- [Albers Alaska projection demo](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-4/albers-alaska-projection)
+- [WGS84 projection demo](https://sarahbellum.github.io/Canvas-Flowmap-Layer/demos-jsapi-4/wgs84-projection)
 
 ## Developer API
 

@@ -17,24 +17,16 @@ require([
   var view = new MapView({
     container: 'viewDiv',
     map: new EsriMap({
-      // use a basemap with an Albers 102003 map projection
+      // use a basemap with an Albers equal area Alaska 102006 map projection
+      // https://www.arcgis.com/home/item.html?id=7ef940add030421c9acd904e5db73421
       basemap: new Basemap({
         baseLayers: [
           new TileLayer({
-            url: 'https://tiles.arcgis.com/tiles/nGt4QxSblgDfeJn9/arcgis/rest/services/Dark_Gray_Albers_North_America_Base/MapServer'
+            url: 'https://tiles.arcgis.com/tiles/PMShNXB1carltgVf/arcgis/rest/services/Albers_AK_Basemap_Gray/MapServer'
           })
         ]
       })
     }),
-    extent: {
-      xmin: -2749287,
-      ymin: -1983352,
-      xmax: 3306971,
-      ymax: 2605315,
-      spatialReference: {
-        wkid: 102003
-      }
-    },
     ui: {
       components: ['zoom', 'attribution', 'compass']
     }

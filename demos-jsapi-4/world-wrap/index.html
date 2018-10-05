@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="description" content="Canvas Flowmap Layer with the Esri ArcGIS API for JavaScript v4.">
+
+  <title>Canvas Flowmap Layer with JSAPI v4</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.9/esri/css/view.css">
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+    }
+
+    body {
+      background-color: rgb(80, 80, 80);
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+
+  <!-- load 3rd-party CSV parsing libary  -->
+  <script src="https://unpkg.com/papaparse@4.6.1/papaparse.min.js"></script>
+
+  <!-- set Dojo configuration options -->
+  <script>
+    var dojoConfig = {
+      async: true,
+      packages: [{
+        name: 'Canvas-Flowmap-Layer',
+        location: location.pathname.replace(/[^\/]+$/, '') + '../../src-jsapi-4'
+      }]
+    };
+  </script>
+
+  <!-- load Esri JSAPI -->
+  <script src="https://js.arcgis.com/4.9/"></script>
+
+  <!-- load this app's code -->
+  <script src="script.js"></script>
+</body>
+
+</html>
