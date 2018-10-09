@@ -3,13 +3,15 @@ define([
   'esri/views/2d/layers/BaseLayerView2D',
   'esri/geometry/Point',
   'esri/geometry/projection',
-  'esri/core/Collection'
+  'esri/core/Collection',
+  'esri/core/promiseUtils'
 ], function(
   Layer,
   BaseLayerView2D,
   Point,
   projection,
-  Collection
+  Collection,
+  promiseUtils
 ) {
   /*
     PART A:
@@ -37,7 +39,7 @@ define([
         var destinationPoint = this.layer.graphics.find(function(graphicToFind) {
           return graphicToFind.attributes._uniqueId === graphic.attributes._uniqueId.split('_')[0] + '_d';
         }).geometry;
-        
+
         var screenOriginCoordinates = this._convertMapPointToScreenCoordinates(originPoint, renderParameters.state);
 
         var screenDestinationCoordinates = this._convertMapPointToScreenCoordinates(destinationPoint, renderParameters.state);
@@ -76,7 +78,7 @@ define([
 
       this.layer.graphics.forEach(function(graphic) {
         var attributes = graphic.attributes;
-        var isOrigin = attributes._isOrigin;
+        var isOrigin = attributes.isOrigin;
         var symbolObject;
 
         if (isOrigin && originUniqueIdValues.indexOf(attributes[originUniqueIdField]) === -1) {
@@ -133,7 +135,7 @@ define([
         // including **how many times** we have rotated around the world
         // in other words: this property is NOT limited to only +/-180 degrees of longitude
         var wrapAroundDiff = rendererState.center[0] - wrappedMapCoordinates[0];
-  
+
         if (
           wrapAroundDiff < this.layer._worldMinX ||
           wrapAroundDiff > this.layer._worldMaxX
@@ -149,24 +151,91 @@ define([
     /*
       USER SELECTION AND INTERACTION METHODS
     */
+    hitTest: function(x, y) {
+      // var hitTestMapPoint = this.view.toMap(x, y);
+
+      var graphicHits = this.layer.graphics.filter(function(graphic) {
+        // TODO: Unwrap geometries? These screen coordinates are never going to
+        // contain the hitTest screen coordinates if the world has already been wrapped.
+        var screenCoordinates = this.view.toScreen(graphic.geometry);
+
+        var size;
+        if (graphic.attributes.isOrigin) {
+          size = this.layer.symbols.originCircle.radius + this.layer.symbols.originCircle.lineWidth;
+        } else {
+          size = this.layer.symbols.destinationCircle.radius + this.layer.symbols.destinationCircle.lineWidth;
+        }
+
+        // does a "screen extent" of each O/D point contain the hitTest screen coordinates?
+        if (
+          (
+            (screenCoordinates.x - size) <= x &&
+            (screenCoordinates.x + size) >= x
+          ) && (
+            (screenCoordinates.y - size) <= y &&
+            (screenCoordinates.y + size) >= y
+          )
+        ) {
+          return true;
+        } else {
+          return false;
+        }
+
+        /*
+        var aPoint = this.view.toMap({
+          x: screenCoordinates.x - size,
+          y: screenCoordinates.y - size
+        });
+
+        var bPoint = this.view.toMap({
+          x: screenCoordinates.x + size,
+          y: screenCoordinates.y + size
+        });
+
+        var extentGeometry = new Extent({
+          xmin: aPoint.x,
+          ymin: bPoint.y,
+          xmax: bPoint.x,
+          ymax: aPoint.y,
+          spatialReference: this.view.spatialReference
+        }).normalize();
+
+        if (extentGeometry.contains(hitTestMapPoint)) {
+          return true;
+        } else {
+          return false;
+        }
+        */
+      }.bind(this));
+
+      graphicHits.forEach(function(graphic) {
+        graphic.layer = this.layer;
+      }.bind(this))
+
+      // TODO: Support giving back multiple graphics for a hitTest?
+      // console.log(graphicHits.length)
+      // for now, just return the first graphic that was found
+      return promiseUtils.resolve(graphicHits.items[0]);
+    },
+
     selectGraphicsForPathDisplayById: function(uniqueOriginOrDestinationIdField, idValue, originBoolean, selectionMode) {
       if (
         uniqueOriginOrDestinationIdField !== this.layer.originAndDestinationFieldIds.originUniqueIdField &&
-          uniqueOriginOrDestinationIdField !== this.layer.originAndDestinationFieldIds.destinationUniqueIdField
+        uniqueOriginOrDestinationIdField !== this.layer.originAndDestinationFieldIds.destinationUniqueIdField
       ) {
         console.error(
           'Invalid unique id field supplied for origin or destination. It must be one of these: ' +
-            this.layer.originAndDestinationFieldIds.originUniqueIdField +
-            ', ' +
-            this.layer.originAndDestinationFieldIds.destinationUniqueIdField
+          this.layer.originAndDestinationFieldIds.originUniqueIdField +
+          ', ' +
+          this.layer.originAndDestinationFieldIds.destinationUniqueIdField
         );
 
         return;
       }
 
       var existingOriginOrDestinationGraphic = this.layer.graphics.find(function(graphic) {
-        return graphic.attributes._isOrigin === originBoolean &&
-            graphic.attributes[uniqueOriginOrDestinationIdField] === idValue;
+        return graphic.attributes.isOrigin === originBoolean &&
+          graphic.attributes[uniqueOriginOrDestinationIdField] === idValue;
       });
 
       var odInfo = this._getSharedOriginOrDestinationGraphics(existingOriginOrDestinationGraphic);
@@ -212,7 +281,7 @@ define([
     },
 
     _getSharedOriginOrDestinationGraphics: function(testGraphic) {
-      var isOriginGraphic = testGraphic.attributes._isOrigin;
+      var isOriginGraphic = testGraphic.attributes.isOrigin;
       var sharedOriginGraphics = [];
       var sharedDestinationGraphics = [];
 
@@ -222,8 +291,8 @@ define([
         var originUniqueIdField = this.layer.originAndDestinationFieldIds.originUniqueIdField;
         var testGraphicOriginId = testGraphic.attributes[originUniqueIdField];
         sharedOriginGraphics = this.layer.graphics.filter(function(graphic) {
-          return graphic.attributes._isOrigin &&
-              graphic.attributes[originUniqueIdField] === testGraphicOriginId;
+          return graphic.attributes.isOrigin &&
+            graphic.attributes[originUniqueIdField] === testGraphicOriginId;
         });
       } else {
         // for a DESTINATION point that was interacted with,
@@ -231,8 +300,8 @@ define([
         var destinationUniqueIdField = this.layer.originAndDestinationFieldIds.destinationUniqueIdField;
         var testGraphicDestinationId = testGraphic.attributes[destinationUniqueIdField];
         sharedDestinationGraphics = this.layer.graphics.filter(function(graphic) {
-          return graphic.attributes._isOrigin &&
-              graphic.attributes[destinationUniqueIdField] === testGraphicDestinationId;
+          return graphic.attributes.isOrigin &&
+            graphic.attributes[destinationUniqueIdField] === testGraphicDestinationId;
         });
       }
 
@@ -318,7 +387,7 @@ define([
                 wkid: 4326
               }
             }), view.spatialReference).x;
-            
+
             // +180 if WGS84
             // this._worldMaxX = projection.project(new Point({
             //   x: 180,
@@ -328,7 +397,7 @@ define([
             //   }
             // }), view.spatialReference).x;
             this._worldMaxX = -this._worldMinX;
-  
+
             // 360 if WGS84
             this._worldWidth = this._worldMaxX - this._worldMinX;
           }
@@ -337,7 +406,7 @@ define([
           // individual origin graphics AND destination graphics (i.e. 2x the original array length)
           // these will also be projected into the view's spatial reference
           this.graphics = this._convertToOriginAndDestinationGraphics(this.graphics, this.originAndDestinationFieldIds, view);
-    
+
           // here the PART A and PART B pieces are glued together
           // with an instance of the custom layer view
           return new CustomLayerView({
@@ -353,7 +422,7 @@ define([
 
       originalGraphicsArray.forEach(function(originGraphic, index) {
         // origin graphic
-        originGraphic.attributes._isOrigin = true;
+        originGraphic.attributes.isOrigin = true;
         originGraphic.attributes._isSelectedForPathDisplay = false;
         originGraphic.attributes._uniqueId = index + '_o';
 
@@ -361,7 +430,7 @@ define([
 
         // destination graphic
         var destinationGraphic = originGraphic.clone();
-        destinationGraphic.attributes._isOrigin = false;
+        destinationGraphic.attributes.isOrigin = false;
         destinationGraphic.attributes._isSelectedForPathDisplay = false;
         destinationGraphic.attributes._uniqueId = index + '_d';
 
