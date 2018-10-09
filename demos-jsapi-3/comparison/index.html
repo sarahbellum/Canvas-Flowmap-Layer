@@ -8,9 +8,10 @@
   
   <title>Canvas Flowmap Layer with JSAPI v3</title>
   
-  <link rel="stylesheet" href="https://js.arcgis.com/3.22/esri/themes/calcite/esri/esri.css">
+  <link rel="stylesheet" href="https://js.arcgis.com/3.26/esri/themes/calcite/esri/esri.css">
   
-  <link rel="stylesheet" href="https://s3-us-west-1.amazonaws.com/patterns.esri.com/files/calcite-web/1.0.0-rc.7/css/calcite-web.min.css">
+  <!-- see https://esri.github.io/calcite-web/ -->
+  <link rel="stylesheet" href="https://s3-us-west-1.amazonaws.com/patterns.esri.com/files/calcite-web/1.1.0/css/calcite-web.min.css">
   
   <style>
     html,
@@ -133,7 +134,7 @@
 
 
   <!-- load 3rd-party CSV parsing libary  -->
-  <script src="https://unpkg.com/papaparse@4/papaparse.min.js"></script>
+  <script src="https://unpkg.com/papaparse@4.6.1/papaparse.min.js"></script>
 
   <!-- set Dojo configuration options -->
   <script>
@@ -141,13 +142,13 @@
       async: true,
       packages: [{
         name: 'Canvas-Flowmap-Layer',
-        location: location.pathname.replace(/[^\/]+$/, '') + '../../src'
+        location: location.pathname.replace(/[^\/]+$/, '') + '../../src-jsapi-3'
       }]
     };
 
   </script>
   <!-- load Esri JSAPI -->
-  <script src="https://js.arcgis.com/3.22compact/"></script>
+  <script src="https://js.arcgis.com/3.26compact/"></script>
 
   <!-- load this app's code -->
   <script src="script.js"></script>
