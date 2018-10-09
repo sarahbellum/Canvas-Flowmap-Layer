@@ -452,16 +452,26 @@ define([
     _redrawCanvas: function() {
       if (this.visible) {
         this._clearCanvas();
+
         // canvas re-drawing of all the origin/destination points
         this._drawAllCanvasPoints();
+
         // loop over each of the "selected" graphics and re-draw the canvas paths
         this._drawSelectedCanvasPaths(false);
+
         // clear/reset previous animation frames
         if (this._animationFrameId) {
           window.cancelAnimationFrame(this._animationFrameId);
         }
-        if (this.animationStarted) {
-          // start animation loop
+
+        if (
+          this.animationStarted &&
+          this.graphics.some(function(graphic) {
+            return graphic.attributes._isSelectedForPathDisplay;
+          })
+        ) {
+          // start animation loop if the layer is currently set for showing animations,
+          // and if there is at least 1 feature selected for displaying paths
           this._animator();
         }
       }
