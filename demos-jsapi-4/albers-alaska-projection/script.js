@@ -27,15 +27,13 @@ require([
         ]
       })
     }),
+    scale: 70000000,
     ui: {
       components: ['zoom', 'attribution', 'compass']
     }
   });
 
   view.when(function() {
-    view.watch('extent', function() {
-      console.log(arguments[0].toJSON())
-    })
     // here we use Papa Parse to load and read the CSV data
     // we could have also used another library like D3js to do the same
     // Papa.parse('../csv-data/Flowmap_Cities_one_to_one.csv', {
