@@ -103,7 +103,7 @@ The Canvas-Flowmap-Layer has default symbology established for origin points, de
 
 Symbol configurations are defined using property objects inspired by the [ArcGIS REST API renderer objects](https://resources.arcgis.com/en/help/arcgis-rest-api/#/Renderer_objects/02r30000019t000000/) specification. Simple, unique value, and class breaks are all supported but instead use canvas stroke and line style property names.
 
-The [custom symbology examples](#custom-symbology-examples) in the API documentation below provide a starting point on how some of these configuration objects should be structured.
+See more API documentation info within [README-JSAPI-3 "custom symbology examples" section](./README-JSAPI-3.md#properties) and [README-JSAPI-4](./README-JSAPI-4.md).
 
 ## Licensing
 
