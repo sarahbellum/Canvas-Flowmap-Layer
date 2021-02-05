@@ -2,7 +2,7 @@
 
 The **Canvas-Flowmap-Layer** extends the [ArcGIS API for JavaScript](https://developers.arcgis.com/javascript/) (Esri JSAPI) to map the flow of objects from an origin point to a destination point by using a Bezier curve. Esri graphics are translated to pixel space so that rendering for the points and curves are mapped to an [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement).
 
-If you are looking for LeafletJS support, there is a **Canvas-Flowmap-Layer** plugin available at [jwasilgeo/Leaflet.Canvas-Flowmap-Layer](https://www.github.com/jwasilgeo/Leaflet.Canvas-Flowmap-Layer).
+If you are looking for **LeafletJS support**, there is a **Canvas-Flowmap-Layer** plugin available at [jwasilgeo/Leaflet.Canvas-Flowmap-Layer](https://www.github.com/jwasilgeo/Leaflet.Canvas-Flowmap-Layer).
 
 Check out our [presentation from **NACIS 2017**](https://www.youtube.com/watch?v=cRPx-BfBtv0).
 
@@ -39,11 +39,11 @@ Esri JSAPI v3
 
 ## Supported JavaScript Web Mapping Libraries
 
-Detailed documentation for Esri JSAPI v4 is available at [README-JSAPI-4](./README-JSAPI-4.md).
+- Detailed documentation for **Esri JSAPI v4** is available at [README-JSAPI-4](./README-JSAPI-4.md).
 
-Detailed documentation for Esri JSAPI v3 is available at [README-JSAPI-3](./README-JSAPI-3.md).
+- Detailed documentation for **Esri JSAPI v3** is available at [README-JSAPI-3](./README-JSAPI-3.md).
 
-If you are looking for LeafletJS support, there is a Canvas-Flowmap-Layer plugin available at [jwasilgeo/Leaflet.Canvas-Flowmap-Layer](https://www.github.com/jwasilgeo/Leaflet.Canvas-Flowmap-Layer). You can also read about it in [this blog post announcement](https://cerebellumaps.wordpress.com/2017/04/20/flow-mapping-with-leaflet/).
+- If you are looking for **LeafletJS support**, there is a Canvas-Flowmap-Layer plugin available at [jwasilgeo/Leaflet.Canvas-Flowmap-Layer](https://www.github.com/jwasilgeo/Leaflet.Canvas-Flowmap-Layer).
 
 ## Purpose
 

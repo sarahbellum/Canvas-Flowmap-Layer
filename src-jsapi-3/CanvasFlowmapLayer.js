@@ -11,7 +11,7 @@ define([
   'esri/SpatialReference',
   'esri/symbols/SimpleMarkerSymbol',
 
-  '//unpkg.com/@tweenjs/tween.js@18.5/dist/tween.umd.js'
+  '//unpkg.com/@tweenjs/tween.js@18.6.4/dist/tween.umd.js'
 ], function(
   declare, lang, domConstruct, on,
   Color, Point, Graphic, GraphicsLayer, SpatialReference, SimpleMarkerSymbol,
